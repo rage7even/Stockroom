@@ -1,0 +1,116 @@
+<main class="auth-layout">
+  <section class="auth-story">
+    <a class="brand" href="#"
+      ><span class="brand-mark"><sr-icon name="box" /></span>stockroom<span
+        class="brand-dot"
+        >.</span
+      ></a
+    >
+    <div class="story-content">
+      <span class="eyebrow light">LESS GUESSWORK. MORE CONTROL.</span>
+      <h1>Every unit.<br />Every order.<br /><span>In sync.</span></h1>
+      <p>
+        One clear picture of your warehouse.<br />From the receiving table to
+        the next delivery.
+      </p>
+      <div class="story-card">
+        <div class="story-check"><sr-icon name="check" /></div>
+        <div>
+          <strong>Promise only what you can deliver.</strong>
+          <p>Live availability across website and phone orders.</p>
+        </div>
+      </div>
+    </div>
+    <div class="story-footer">
+      <span>STOCKROOM / ALMATY</span><span>Built for small teams.</span>
+    </div>
+  </section>
+  <section class="auth-form">
+    <div class="auth-form-inner">
+      <span class="eyebrow">YOUR WAREHOUSE, CONNECTED</span>
+      <h2>{{register()?'Create your account':'Welcome back'}}</h2>
+      <p class="subtle">
+        {{register()?'Join your team with a sales account.':'Sign in to keep
+        your stock moving.'}}
+      </p>
+      <form (ngSubmit)="submit()" #form="ngForm">
+        @if(register()){<label
+          >Full name<input
+            name="name"
+            [(ngModel)]="name"
+            required
+            minlength="2"
+            maxlength="80"
+            autocomplete="name"
+            placeholder="Your full name" /></label
+        >}
+        <label
+          >Email address<input
+            type="email"
+            name="login"
+            [(ngModel)]="login"
+            required
+            maxlength="150"
+            autocomplete="username"
+            placeholder="you@company.com"
+        /></label>
+        <label
+          >Password
+          <div class="password-field">
+            <input
+              [type]="showPassword()?'text':'password'"
+              name="password"
+              [(ngModel)]="password"
+              required
+              [minlength]="register()?10:1"
+              maxlength="128"
+              [autocomplete]="register()?'new-password':'current-password'"
+              placeholder="Enter your password"
+            /><button type="button" (click)="showPassword.set(!showPassword())">
+              {{showPassword()?'Hide':'Show'}}
+            </button>
+          </div></label
+        >
+        @if(register()){
+        <p class="field-help">
+          At least 10 characters. New accounts have sales access; an admin can
+          change your role.
+        </p>
+        } @if(error()){
+        <div class="error" role="alert">{{error()}}</div>
+        }
+        <button
+          class="btn primary auth-submit"
+          [disabled]="!form.valid||busy()"
+        >
+          {{busy()?'Connecting…':register()?'Create account':'Sign in'}}<sr-icon
+            name="arrow"
+          />
+        </button>
+      </form>
+      <p class="auth-switch">
+        {{register()?'Already on the team?':'New to Stockroom?'}}
+        <button
+          class="text-button"
+          (click)="register.set(!register());error.set('')"
+        >
+          {{register()?'Sign in':'Create an account'}}
+        </button>
+      </p>
+      <div class="demo-box">
+        <div><sr-icon name="shield" /><strong>Explore the demo</strong></div>
+        <p>Fictional products and orders, ready for your presentation.</p>
+        <div class="demo-roles">
+          @for(role of ['manager','sales','admin'];track role){<button
+            type="button"
+            (click)="demo(role)"
+          >
+            {{role}}</button
+          >}
+        </div>
+        <small>Password: Stockroom2026!</small>
+      </div>
+    </div>
+    <p class="auth-bottom">Inventory, in sync. <span>Stockroom v1.0</span></p>
+  </section>
+</main>

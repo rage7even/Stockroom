@@ -1,0 +1,179 @@
+@if(!s.warehouse()){
+<div class="empty-state">
+  <sr-icon name="lock" />
+  <h1>Manager access required</h1>
+  <p>Your sales account can view products and confirm orders.</p>
+</div>
+}@else{
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">FROM DELIVERY TO AVAILABLE</span>
+    <h1>Receiving<span class="heading-dot">.</span></h1>
+    <p>Bring new stock onto the shelf, with a clear record of every change.</p>
+  </div>
+  <span class="badge green">Manager workspace</span>
+</div>
+<div class="receiving-grid">
+  <section class="panel receiving-form">
+    <div class="panel-heading">
+      <div>
+        <h2>
+          {{mode()==='receive'?'Receive a delivery':'Correct stock count'}}
+        </h2>
+        <p>
+          {{mode()==='receive'?'Scan a SKU or enter the code by hand.':'Use a
+          signed adjustment, never overwrite history.'}}
+        </p>
+      </div>
+      <sr-icon name="receive" />
+    </div>
+    <div class="tab-strip inset">
+      <button
+        [class.selected]="mode()==='receive'"
+        (click)="mode.set('receive');confirmed=false"
+      >
+        Delivery in</button
+      ><button
+        [class.selected]="mode()==='adjust'"
+        (click)="mode.set('adjust');confirmed=false"
+      >
+        Stock correction
+      </button>
+    </div>
+    <form (ngSubmit)="submit()" #f="ngForm" class="modal-form">
+      <label
+        >Product SKU
+        <div class="scan-input">
+          <input
+            id="scan-field"
+            autofocus
+            name="sku"
+            [(ngModel)]="sku"
+            (ngModelChange)="confirmed=false"
+            required
+            pattern="[A-Z]{3}-[A-Z0-9]{2,12}-[A-Z]{3}"
+            placeholder="e.g. BAS-C65W-WHT"
+            list="sku-list"
+            autocomplete="off"
+          /><sr-icon name="box" /></div></label
+      ><datalist id="sku-list">
+        @for(p of s.products();track p.sku){
+        <option [value]="p.sku">{{p.product_name}}</option>
+        }
+      </datalist>
+      <p class="field-help">
+        HID scanners work like a keyboard. Keep the cursor in the SKU field.
+        Manual entry is always available.
+      </p>
+      @if(product();as p){
+      <div class="receipt-product">
+        <span class="product-symbol mint"><sr-icon name="box" /></span>
+        <div>
+          <strong>{{p.product_name}}</strong
+          ><small
+            >Shelf {{p.location}} · {{p.qty_in_stock}} on shelf · {{p.reserved}}
+            reserved</small
+          >
+        </div>
+      </div>
+      }
+      <div class="form-grid">
+        <label
+          >{{mode()==='receive'?'Quantity received':'Adjustment (+ / −)'}}<input
+            type="number"
+            name="quantity"
+            [(ngModel)]="quantity"
+            (ngModelChange)="confirmed=false"
+            required
+            [min]="mode()==='receive'?1:-100000"
+            max="100000"
+            step="1" /></label
+        ><label
+          >Entry method<select name="source" [(ngModel)]="source">
+            <option value="manual">Manual entry</option>
+            <option value="scanner">Barcode scanner</option>
+          </select></label
+        >
+      </div>
+      <label
+        >Delivery reference / reason<textarea
+          name="note"
+          [(ngModel)]="note"
+          (ngModelChange)="confirmed=false"
+          required
+          minlength="3"
+          maxlength="300"
+          rows="3"
+          placeholder="Delivery note number or reason for correction"
+        ></textarea>
+      </label>
+      @if(product();as p){
+      <div class="receipt-preview">
+        <span>On shelf after this change</span
+        ><strong>{{p.qty_in_stock+(quantity||0)}} <small>units</small></strong
+        ><small>Available after change: {{p.available+(quantity||0)}}</small>
+      </div>
+      } @if(s.error()){
+      <div class="error" role="alert">{{s.error()}}</div>
+      } @if(confirmed){
+      <div class="notice amber">
+        Review the quantity and reason, then confirm to write this change to
+        stock history.
+      </div>
+      }
+      <button
+        class="btn primary full"
+        [disabled]="!f.valid||!product()||!quantity||s.busy()"
+      >
+        {{s.busy()?'Saving…':confirmed?'Confirm stock change':'Review stock
+        change'}}<sr-icon name="check" />
+      </button>
+    </form>
+  </section>
+  <div>
+    <section class="panel receiving-guide">
+      <span class="eyebrow">A SIMPLE RECEIVING ROUTINE</span>
+      <h2>Count. Check. Confirm.</h2>
+      <ol>
+        <li>
+          <strong>Identify the product</strong>
+          <p>Scan its SKU or type it from the delivery note.</p>
+        </li>
+        <li>
+          <strong>Count physical units</strong>
+          <p>Enter what actually arrived, not what was ordered.</p>
+        </li>
+        <li>
+          <strong>Leave a clear reference</strong>
+          <p>Your name, time and entry method are saved with the change.</p>
+        </li>
+      </ol>
+      <div class="notice mint">
+        <sr-icon name="shield" /><span
+          >Reserved units are protected. A correction cannot reduce available
+          stock below zero.</span
+        >
+      </div>
+    </section>
+    <section class="panel recent-receipts">
+      <div class="panel-heading">
+        <div>
+          <h2>Recent deliveries</h2>
+          <p>Latest units added to your shelf.</p>
+        </div>
+      </div>
+      @for(m of recent();track m.movement_id){
+      <div class="receipt-row">
+        <div>
+          <strong>{{m.product_name}}</strong
+          ><small>{{m.moved_at|date:'dd MMM, HH:mm'}} · {{m.source}}</small>
+        </div>
+        <span class="positive">+{{m.physical_delta}}</span>
+      </div>
+      }@empty{
+      <p class="empty">No deliveries yet.</p>
+      }
+    </section>
+  </div>
+</div>
+}

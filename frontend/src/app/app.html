@@ -1,0 +1,109 @@
+@if(!s.ready()){
+<div class="loading-screen">
+  <span class="brand-mark"><sr-icon name="box" /></span>
+  <p>Opening your stockroom…</p>
+</div>
+} @else if(!s.user()){<sr-auth />} @else{
+<div class="app-layout">
+  <aside class="sidebar" [class.mobile-open]="mobile()">
+    <a routerLink="/" class="brand" (click)="mobile.set(false)"
+      ><span class="brand-mark"><sr-icon name="box" /></span>stockroom<span
+        class="brand-dot"
+        >.</span
+      ></a
+    >
+    <div class="workspace">
+      <span class="workspace-icon">S</span>
+      <div>
+        <strong>Almaty warehouse</strong><small>Phone accessories</small>
+      </div>
+      <span class="status-dot"></span>
+    </div>
+    <p class="nav-label">WORKSPACE</p>
+    <nav aria-label="Main navigation">
+      @for(item of navigation;track
+      item.path){@if(!item.restricted||s.warehouse()){<a
+        [routerLink]="item.path"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{exact:true}"
+        (click)="mobile.set(false)"
+        ><sr-icon [name]="item.icon" /><span>{{item.label}}</span
+        >@if(item.path==='/orders'&&s.openOrders().length){<b>{{s.openOrders().length}}</b>}</a
+      >}}
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note">
+        <sr-icon name="shield" /><strong>One source of stock truth</strong>
+        <p>
+          Available = on shelf − reserved.<br />Every change leaves a trace.
+        </p>
+      </div>
+      @if(s.user()?.role==='admin'){<a
+        class="settings-link"
+        routerLink="/settings"
+        routerLinkActive="active"
+        ><sr-icon name="settings" />Settings & access</a
+      >}
+      <div class="profile">
+        <span class="avatar">{{s.user()!.full_name.charAt(0)}}</span>
+        <div>
+          <strong>{{s.user()!.full_name}}</strong
+          ><small>{{s.user()!.role}}</small>
+        </div>
+        <button
+          class="icon-button"
+          (click)="s.logout()"
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <sr-icon name="logout" />
+        </button>
+      </div>
+    </div>
+  </aside>
+  @if(mobile()){<button
+    class="sidebar-backdrop"
+    (click)="mobile.set(false)"
+    aria-label="Close navigation"
+  ></button
+  >}
+  <div class="main-content">
+    <header class="topbar">
+      <button
+        class="icon-button mobile-menu"
+        (click)="mobile.set(!mobile())"
+        aria-label="Open navigation"
+      >
+        <sr-icon name="menu" />
+      </button>
+      <div class="breadcrumb">
+        Workspace <span>/</span> <strong>Inventory management</strong>
+      </div>
+      <div class="topbar-right">
+        <span class="live-pill"><i></i>Local workspace</span
+        ><span class="today">{{today|date:'EEE, d MMM y'}}</span>
+      </div>
+    </header>
+    <main class="page">
+      @if(s.error()){
+      <div class="error global-error" role="alert">
+        <sr-icon name="alert" /><span>{{s.error()}}</span
+        ><button
+          class="icon-button"
+          (click)="s.error.set('')"
+          aria-label="Dismiss error"
+        >
+          <sr-icon name="close" />
+        </button>
+      </div>
+      }<router-outlet />
+    </main>
+    <footer class="page-footer">
+      <span>Stockroom · Inventory, in sync.</span
+      ><span>Almaty warehouse / KZT</span>
+    </footer>
+  </div>
+</div>
+@if(s.toast()){
+<div class="toast" role="status"><sr-icon name="check" />{{s.toast()}}</div>
+}}

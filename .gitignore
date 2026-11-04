@@ -1,0 +1,30 @@
+.venv/
+__pycache__/
+*.pyc
+*.db-wal
+*.db-shm
+*.db-journal
+data/
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+*.log
+.tools/
+
+# Local defense guides; keep shared technical references.
+docs/*
+!docs/API.md
+!docs/ARCHITECTURE.md
+README_RU.md
+.env
+.env.*
+!.env.example
+
+# Generated local QA evidence; scripts and input cases stay versioned.
+qa/automated_tests.txt
+qa/data_quality_run.txt
+qa/data_quality_results.csv
+qa/http_smoke_results.json
+qa/frontend_build.txt
+qa/django_migration_results.json
+qa/QA_REPORT_RU.md

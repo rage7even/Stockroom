@@ -1,0 +1,260 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">THE SHELF, AT A GLANCE</span>
+    <h1>Products<span class="heading-dot">.</span></h1>
+    <p>Your catalogue, live availability and the details behind every unit.</p>
+  </div>
+  <div class="button-group">
+    <button class="btn" (click)="export()">
+      <sr-icon name="download" />Export</button
+    >@if(s.warehouse()){<button class="btn primary" (click)="openEditor()">
+      <sr-icon name="plus" />Add product</button
+    >}
+  </div>
+</div>
+<div class="tab-strip">
+  <button [class.selected]="stock()==='all'" (click)="stock.set('all')">
+    All products <span>{{s.products().length}}</span></button
+  ><button [class.selected]="stock()==='low'" (click)="stock.set('low')">
+    Low stock <span>{{s.lowStock().length}}</span></button
+  ><button [class.selected]="stock()==='out'" (click)="stock.set('out')">
+    Out of stock <span>{{outCount()}}</span>
+  </button>
+</div>
+<section class="panel">
+  <div class="toolbar">
+    <div class="search-field">
+      <sr-icon name="search" /><input
+        aria-label="Search products"
+        placeholder="Search by name, SKU or brand…"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+    </div>
+    <div class="filter-group">
+      <select
+        aria-label="Category"
+        [ngModel]="category()"
+        (ngModelChange)="category.set($event)"
+      >
+        <option value="all">All categories</option>
+        @for(c of categories;track c){
+        <option [value]="c">{{c}}</option>
+        }</select
+      ><select
+        aria-label="Sort products"
+        [ngModel]="sort()"
+        (ngModelChange)="sort.set($event)"
+      >
+        <option value="name">Name A–Z</option>
+        <option value="stock">Lowest available</option>
+        <option value="price">Price: low to high</option>
+      </select>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>On shelf</th>
+          <th>Reserved</th>
+          <th>Available</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(p of filtered();track p.sku){
+        <tr>
+          <td>
+            <button
+              class="product-cell product-button"
+              (click)="detail.set(p.sku)"
+            >
+              <span
+                [class]="'product-symbol '+(p.category==='Audio'?'lavender':p.category==='Cables'?'sand':'mint')"
+                ><sr-icon [name]="icon(p.category)" /></span
+              ><span
+                ><strong>{{p.product_name}}</strong
+                ><small>{{p.sku}}</small></span
+              >
+            </button>
+          </td>
+          <td>{{p.category}}</td>
+          <td class="nowrap">{{p.price_kzt|number}} ₸</td>
+          <td>{{p.qty_in_stock}}</td>
+          <td class="subtle">{{p.reserved}}</td>
+          <td><strong>{{p.available}}</strong></td>
+          <td>
+            <span
+              [class]="'badge '+(p.available===0?'red':p.available < p.reorder_level?'amber':'green')"
+              >{{p.available===0?'Out of stock':p.available <
+              p.reorder_level?'Low stock':'In stock'}}</span
+            >
+          </td>
+          <td>
+            <button
+              class="icon-button"
+              (click)="detail.set(p.sku)"
+              [attr.aria-label]="'View '+p.product_name"
+            >
+              <sr-icon name="arrow" />
+            </button>
+          </td>
+        </tr>
+        }@empty{
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <sr-icon name="search" />
+              <h3>No products found</h3>
+              <p>Try another search or reset the filters.</p>
+              <button class="btn" (click)="reset()">Reset filters</button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="table-footer">
+    <span
+      >Showing {{filtered().length}} of {{s.products().length}} products</span
+    ><span>Availability includes all confirmed and packed orders.</span>
+  </div>
+</section>
+@if(selected();as p){<sr-modal
+  title="Product details"
+  [wide]="true"
+  (closed)="detail.set('')"
+  ><div class="detail-hero">
+    <span class="detail-symbol"><sr-icon [name]="icon(p.category)" /></span>
+    <div>
+      <span class="eyebrow">{{p.brand}} / {{p.category}}</span>
+      <h2>{{p.product_name}}</h2>
+      <p class="mono">{{p.sku}}</p>
+      <strong class="detail-price">{{p.price_kzt|number}} ₸</strong>
+    </div>
+  </div>
+  <div class="detail-stats">
+    <div><span>On shelf</span><strong>{{p.qty_in_stock}}</strong></div>
+    <div><span>Reserved</span><strong>{{p.reserved}}</strong></div>
+    <div class="mint">
+      <span>Available</span><strong>{{p.available}}</strong>
+    </div>
+  </div>
+  <div class="detail-meta">
+    <div><span>Shelf location</span><strong>{{p.location}}</strong></div>
+    <div>
+      <span>Reorder threshold</span><strong>{{p.reorder_level}} units</strong>
+    </div>
+  </div>
+  @if(s.warehouse()){
+  <h3 class="section-subhead">Recent stock movements</h3>
+  <div class="detail-history">
+    @for(m of productHistory();track m.movement_id){
+    <div>
+      <span
+        ><strong>{{m.movement_type.replace('_',' ')}}</strong
+        ><small
+          >{{m.moved_at|date:'dd MMM, HH:mm'}} · {{m.staff_name}}</small
+        ></span
+      ><strong
+        >{{m.physical_delta>0?'+':''}}{{m.physical_delta}} shelf /
+        {{m.reserved_delta>0?'+':''}}{{m.reserved_delta}} reserved</strong
+      >
+    </div>
+    }@empty{
+    <p class="subtle">No movements recorded.</p>
+    }
+  </div>
+  }
+  <div class="modal-actions">
+    <button class="btn" (click)="print(p)">Print shelf label</button
+    >@if(s.warehouse()){<button
+      class="btn primary"
+      (click)="openEditor(p);detail.set('')"
+    >
+      <sr-icon name="edit" />Edit product</button
+    >}
+  </div></sr-modal
+>} @if(editor()){<sr-modal
+  [title]="editing?'Edit product':'Add a product'"
+  (closed)="editor.set(false)"
+  ><form (ngSubmit)="save()" #f="ngForm" class="modal-form">
+    <label
+      >Product name<input
+        name="product_name"
+        [(ngModel)]="form.product_name"
+        required
+        minlength="2"
+        maxlength="100"
+    /></label>
+    <div class="form-grid">
+      <label
+        >SKU<input
+          name="sku"
+          [(ngModel)]="form.sku"
+          [disabled]="!!editing"
+          required
+          pattern="[A-Z]{3}-[A-Z0-9]{2,12}-[A-Z]{3}"
+          placeholder="ANK-C20W-WHT" /></label
+      ><label
+        >Brand<input
+          name="brand"
+          [(ngModel)]="form.brand"
+          required
+          minlength="2"
+          maxlength="40" /></label
+      ><label
+        >Category<select name="category" [(ngModel)]="form.category">
+          @for(c of categories;track c){
+          <option>{{c}}</option>
+          }
+        </select></label
+      ><label
+        >Price (KZT)<input
+          name="price"
+          type="number"
+          [(ngModel)]="form.price_kzt"
+          required
+          min="1"
+          max="10000000"
+          step="1" /></label
+      ><label
+        >Reorder threshold<input
+          name="threshold"
+          type="number"
+          [(ngModel)]="form.reorder_level"
+          required
+          min="0"
+          max="100000"
+          step="1" /></label
+      ><label
+        >Shelf location<input
+          name="location"
+          [(ngModel)]="form.location"
+          required
+          maxlength="30"
+          placeholder="A-01"
+      /></label>
+    </div>
+    <p class="field-help">
+      SKU format: three-letter brand, model code, three-letter colour. New
+      products start at zero stock; use Receiving to add units.
+    </p>
+    @if(s.error()){
+    <div class="error" role="alert">{{s.error()}}</div>
+    }
+    <div class="modal-actions">
+      <button type="button" class="btn" (click)="editor.set(false)">
+        Cancel</button
+      ><button class="btn primary" [disabled]="!f.valid||s.busy()">
+        {{s.busy()?'Saving…':'Save product'}}
+      </button>
+    </div>
+  </form></sr-modal
+>}

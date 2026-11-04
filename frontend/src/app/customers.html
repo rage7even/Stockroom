@@ -1,0 +1,102 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">THE PEOPLE BEHIND THE ORDERS</span>
+    <h1>Customers<span class="heading-dot">.</span></h1>
+    <p>One shop, one record. A shared customer list for both sales channels.</p>
+  </div>
+  <button class="btn primary" (click)="open()">
+    <sr-icon name="plus" />Add customer
+  </button>
+</div>
+<section class="panel">
+  <div class="toolbar">
+    <div class="search-field">
+      <sr-icon name="search" /><input
+        aria-label="Search customers"
+        placeholder="Search shop, contact or phone…"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+    </div>
+    <span class="subtle">{{filtered().length}} customers</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Shop</th>
+          <th>Contact</th>
+          <th>Phone</th>
+          <th>Orders</th>
+          <th>Shipped value</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(c of filtered();track c.customer_id){
+        <tr>
+          <td>
+            <div class="product-cell">
+              <span class="customer-avatar">{{c.shop_name.charAt(0)}}</span
+              ><strong>{{c.shop_name}}</strong>
+            </div>
+          </td>
+          <td>{{c.contact_name}}</td>
+          <td class="mono">{{c.phone}}</td>
+          <td>{{orderCount(c.customer_id)}}</td>
+          <td>{{value(c.customer_id)|number}} ₸</td>
+        </tr>
+        }@empty{
+        <tr>
+          <td colspan="5" class="empty-state">
+            <sr-icon name="users" />
+            <h3>No customers found</h3>
+            <p>Add a shop to start taking orders.</p>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+@if(creating()){<sr-modal title="Add a customer" (closed)="creating.set(false)"
+  ><form (ngSubmit)="save()" #f="ngForm" class="modal-form">
+    <label
+      >Shop name<input
+        name="shop"
+        [(ngModel)]="form.shop_name"
+        required
+        minlength="2"
+        maxlength="80"
+        placeholder="Shop or business name" /></label
+    ><label
+      >Contact name<input
+        name="contact"
+        [(ngModel)]="form.contact_name"
+        required
+        minlength="2"
+        maxlength="80" /></label
+    ><label
+      >Phone<input
+        name="phone"
+        type="tel"
+        [(ngModel)]="form.phone"
+        required
+        minlength="7" maxlength="25"
+        placeholder="+7 700 123 4567"
+    /></label>
+    <p class="field-help">
+      Shop names are unique, ignoring letter case. Orders link to this customer
+      record instead of copying its details.
+    </p>
+    @if(s.error()){
+    <div class="error" role="alert">{{s.error()}}</div>
+    }
+    <div class="modal-actions">
+      <button type="button" class="btn" (click)="creating.set(false)">
+        Cancel</button
+      ><button class="btn primary" [disabled]="!f.valid||s.busy()">
+        {{s.busy()?'Saving…':'Save customer'}}
+      </button>
+    </div>
+  </form></sr-modal
+>}

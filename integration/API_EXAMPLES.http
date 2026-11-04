@@ -1,0 +1,32 @@
+### First sign in. Use a REST client that persists cookies, the examples in docs/API.md.
+POST http://127.0.0.1:8000/api/auth/login
+Content-Type: application/json
+
+{"login":"manager@stockroom.local","password":"Stockroom2026!"}
+
+### Live inventory
+GET http://127.0.0.1:8000/api/products
+
+### TC-01: initial demo state has 4 available, so this must return HTTP 409.
+POST http://127.0.0.1:8000/api/orders
+Content-Type: application/json
+
+{"customer_id":1,"channel":"sales_manager","lines":[{"sku":"BAS-C65W-WHT","qty":5}],"note":"TC-01"}
+
+### Exact available quantity: succeeds only while 4 remain available.
+POST http://127.0.0.1:8000/api/orders
+Content-Type: application/json
+
+{"customer_id":1,"channel":"website","lines":[{"sku":"BAS-C65W-WHT","qty":4}],"note":"Acceptance demo"}
+
+### Replace ORD-2026-0004 with the actual returned order ID.
+POST http://127.0.0.1:8000/api/orders/ORD-2026-0004/cancel
+
+### Receive stock
+POST http://127.0.0.1:8000/api/stock/receive
+Content-Type: application/json
+
+{"sku":"HOC-U72-BLK","quantity":5,"source":"manual","note":"Delivery note DN-001"}
+
+### Audit trail (manager/admin)
+GET http://127.0.0.1:8000/api/movements

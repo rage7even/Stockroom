@@ -1,0 +1,25 @@
+<div class="modal-backdrop" (click)="closed.emit()">
+  <section
+    class="modal"
+    [class.wide]="wide"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="title"
+    (click)="$event.stopPropagation()"
+  >
+    <header class="modal-header">
+      <div>
+        <span class="eyebrow">STOCKROOM WORKSPACE</span>
+        <h2>{{title}}</h2>
+      </div>
+      <button
+        class="icon-button"
+        aria-label="Close dialog"
+        (click)="closed.emit()"
+      >
+        <sr-icon name="close" />
+      </button>
+    </header>
+    <ng-content />
+  </section>
+</div>

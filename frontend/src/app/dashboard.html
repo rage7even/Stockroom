@@ -1,0 +1,223 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">YOUR DAILY PICTURE</span>
+    <h1>Warehouse overview<span class="heading-dot">.</span></h1>
+    <p>Know what’s on the shelf. See what needs your attention.</p>
+  </div>
+  <a routerLink="/orders" [queryParams]="{create:1}" class="btn primary"
+    ><sr-icon name="plus" />Create order</a
+  >
+</div>
+<div class="stats-grid">
+  <article class="stat-card">
+    <div class="stat-top">
+      <span>Total products</span
+      ><span class="stat-icon"><sr-icon name="box" /></span>
+    </div>
+    <strong>{{s.products().length}}</strong
+    ><small>Active SKUs in your catalogue</small>
+  </article>
+  <article class="stat-card">
+    <div class="stat-top">
+      <span>Available units</span
+      ><span class="stat-icon"><sr-icon name="grid" /></span>
+    </div>
+    <strong>{{available()|number}}</strong
+    ><small>{{reserved()|number}} units reserved for orders</small>
+  </article>
+  <article class="stat-card">
+    <div class="stat-top">
+      <span>Open orders</span
+      ><span class="stat-icon"><sr-icon name="orders" /></span>
+    </div>
+    <strong>{{s.openOrders().length}}</strong
+    ><small>Confirmed or ready to ship</small>
+  </article>
+  <article class="stat-card warning">
+    <div class="stat-top">
+      <span>Low-stock products</span
+      ><span class="stat-icon"><sr-icon name="alert" /></span>
+    </div>
+    <strong
+      >{{s.lowStock().length}}<span class="small-badge"
+        >Needs attention</span
+      ></strong
+    ><small>Below their reorder threshold</small>
+  </article>
+</div>
+<section class="overview-banner">
+  <div class="banner-icon"><sr-icon name="shield" /></div>
+  <div>
+    <span class="eyebrow">NO MORE DOUBLE PROMISES</span>
+    <h2>The right number. Before you confirm.</h2>
+    <p>Website and phone orders reserve from the same available stock.</p>
+  </div>
+  <a routerLink="/orders" class="btn light"
+    >View orders<sr-icon name="arrow"
+  /></a>
+</section>
+<div class="dashboard-columns">
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>
+          Replenishment watchlist
+          <span class="count">{{s.lowStock().length}}</span>
+        </h2>
+        <p>These products could hold up your next order.</p>
+      </div>
+      <a routerLink="/products" [queryParams]="{stock:'low'}" class="text-link"
+        >View all<sr-icon name="arrow"
+      /></a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Available</th>
+            <th>On shelf</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(p of s.lowStock().slice(0,5);track p.sku){
+          <tr>
+            <td>
+              <div class="product-cell">
+                <span
+                  class="product-symbol"
+                  [class]="'product-symbol '+categoryClass(p.category)"
+                  ><sr-icon [name]="productIcon(p.category)"
+                /></span>
+                <div>
+                  <strong>{{p.product_name}}</strong><small>{{p.sku}}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <strong>{{p.available}}</strong> <span class="subtle">units</span>
+            </td>
+            <td>{{p.qty_in_stock}}</td>
+            <td>
+              <span [class]="'badge '+(p.available===0?'red':'amber')"
+                >{{p.available===0?'Out of stock':'Low stock'}}</span
+              >
+            </td>
+          </tr>
+          }@empty{
+          <tr>
+            <td colspan="4" class="empty">
+              All products are above their reorder threshold.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="panel category-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Stock by category</h2>
+        <p>Available units, right now.</p>
+      </div>
+      <sr-icon name="box" />
+    </div>
+    <div class="category-bars">
+      @for(c of categories();track c.name){
+      <div>
+        <div class="bar-label">
+          <span>{{c.name}}</span><strong>{{c.units}}</strong>
+        </div>
+        <div class="bar-track">
+          <span [style.width.%]="c.units/maxCategory()*100"></span>
+        </div>
+      </div>
+      }
+    </div>
+    <div class="panel-foot">{{available()|number}} units ready to sell</div>
+  </section>
+</div>
+<div class="dashboard-columns lower">
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Recent orders</h2>
+        <p>The latest promises made to your customers.</p>
+      </div>
+      <a routerLink="/orders" class="text-link"
+        >All orders<sr-icon name="arrow"
+      /></a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Order / customer</th>
+            <th>Channel</th>
+            <th>Total</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for(o of s.orders().slice(0,4);track o.order_id){
+          <tr>
+            <td>
+              <strong>{{o.order_id}}</strong><small>{{o.shop_name}}</small>
+            </td>
+            <td>{{o.channel==='website'?'Website':'Phone order'}}</td>
+            <td class="nowrap">{{o.total_kzt|number}} ₸</td>
+            <td>
+              <span
+                [class]="'badge '+(o.status==='shipped'?'green':o.status==='cancelled'?'neutral':'blue')"
+                >{{o.status}}</span
+              >
+            </td>
+          </tr>
+          }@empty{
+          <tr>
+            <td colspan="4" class="empty">
+              Your first order will appear here.
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="panel attention-panel">
+    <div class="panel-heading">
+      <div>
+        <h2>Keep things moving</h2>
+        <p>A little attention goes a long way.</p>
+      </div>
+    </div>
+    <a
+      routerLink="/orders"
+      [queryParams]="{status:'stale'}"
+      class="attention-row"
+      ><span class="attention-icon amber"><sr-icon name="history" /></span>
+      <div>
+        <strong>{{s.staleOrders().length}} ageing reservations</strong>
+        <p>Open for more than 14 days. Review before releasing.</p>
+      </div>
+      <sr-icon name="arrow" /></a
+    ><a
+      routerLink="/products"
+      [queryParams]="{stock:'out'}"
+      class="attention-row"
+      ><span class="attention-icon red"><sr-icon name="box" /></span>
+      <div>
+        <strong>{{outOfStock()}} products unavailable</strong>
+        <p>Check shelves and plan your next delivery.</p>
+      </div>
+      <sr-icon name="arrow"
+    /></a>
+    <div class="stock-value">
+      <span>Stock value on shelf</span
+      ><strong>{{value()|number}} <small>₸</small></strong>
+      <p>At current catalogue prices</p>
+    </div>
+  </section>
+</div>

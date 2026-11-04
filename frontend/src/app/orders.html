@@ -1,0 +1,302 @@
+<div class="page-heading">
+  <div>
+    <span class="eyebrow">EVERY PROMISE, ACCOUNTED FOR</span>
+    <h1>Orders<span class="heading-dot">.</span></h1>
+    <p>Confirm, pack and ship. Stock is reserved the moment you confirm.</p>
+  </div>
+  <button class="btn primary" (click)="openCreate()">
+    <sr-icon name="plus" />Create order
+  </button>
+</div>
+@if(s.staleOrders().length){
+<div class="notice amber">
+  <sr-icon name="history" /><span
+    ><strong
+      >{{s.staleOrders().length}} reservation(s) older than 14 days.</strong
+    >
+    Review with the warehouse manager; reservations are never released
+    automatically.</span
+  ><button class="text-button" (click)="status.set('stale')">Review</button>
+</div>
+}
+<div class="tab-strip">
+  @for(tab of tabs;track tab.value){<button
+    [class.selected]="status()===tab.value"
+    (click)="status.set(tab.value)"
+  >
+    {{tab.name}}<span>{{count(tab.value)}}</span></button
+  >}
+</div>
+<section class="panel">
+  <div class="toolbar">
+    <div class="search-field">
+      <sr-icon name="search" /><input
+        aria-label="Search orders"
+        placeholder="Search order ID or customer…"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+    </div>
+    <span class="subtle">{{filtered().length}} orders</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Channel</th>
+          <th>Confirmed</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(o of filtered();track o.order_id){
+        <tr>
+          <td>
+            <button class="text-button" (click)="detail.set(o.order_id)">
+              {{o.order_id}}</button
+            >@if(o.stale){<small class="warning-text">Over 14 days old</small>}
+          </td>
+          <td>{{o.shop_name}}</td>
+          <td>
+            <span class="channel-dot" [class.web]="o.channel==='website'"></span
+            >{{o.channel==='website'?'Website':'Phone'}}
+          </td>
+          <td>{{o.confirmed_at|date:'dd MMM y, HH:mm'}}</td>
+          <td class="nowrap">{{o.total_kzt|number}} ₸</td>
+          <td>
+            <span
+              [class]="'badge '+(o.status==='shipped'?'green':o.status==='cancelled'?'neutral':o.status==='packed'?'lavender':'blue')"
+              >{{o.status}}</span
+            >
+          </td>
+          <td>
+            <button
+              class="icon-button"
+              (click)="detail.set(o.order_id)"
+              [attr.aria-label]="'View '+o.order_id"
+            >
+              <sr-icon name="arrow" />
+            </button>
+          </td>
+        </tr>
+        }@empty{
+        <tr>
+          <td colspan="7" class="empty-state">
+            <sr-icon name="orders" />
+            <h3>No orders here yet</h3>
+            <p>Create an order or choose another filter.</p>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+@if(creating()){<sr-modal
+  title="Create an order"
+  [wide]="true"
+  (closed)="creating.set(false)"
+  ><form class="modal-form" (ngSubmit)="submit()" #f="ngForm">
+    <div class="form-grid">
+      <label
+        >Customer<select name="customer" [(ngModel)]="customerId" required>
+          <option [ngValue]="null" disabled>Select a shop</option>
+          @for(c of s.customers();track c.customer_id){
+          <option [ngValue]="c.customer_id">{{c.shop_name}}</option>
+          }
+        </select></label
+      ><label
+        >Sales channel<select name="channel" [(ngModel)]="channel">
+          <option value="sales_manager">Phone / sales manager</option>
+          <option value="website">Website</option>
+        </select></label
+      >
+    </div>
+    @if(!s.customers().length){
+    <p class="field-help">
+      Add a customer on the
+      <a routerLink="/customers" (click)="creating.set(false)"
+        >Customers page</a
+      >
+      first.
+    </p>
+    }
+    <h3 class="section-subhead">Order lines</h3>
+    <div class="order-lines">
+      @for(line of lines;track $index;let i=$index){
+      <div class="order-line">
+        <label
+          >Product<select [name]="'sku'+i" [(ngModel)]="line.sku" required>
+            <option value="" disabled>Select a product</option>
+            @for(p of s.products();track p.sku){
+            <option [value]="p.sku">
+              {{p.product_name}} · {{p.available}} available
+            </option>
+            }</select
+          ><small
+            >{{line.sku}} @if(line.sku){· {{available(line.sku)}} units
+            available}</small
+          ></label
+        ><label
+          >Quantity<input
+            type="number"
+            [name]="'qty'+i"
+            [(ngModel)]="line.qty"
+            required
+            min="1"
+            max="100000"
+            step="1" /></label
+        ><button
+          type="button"
+          class="icon-button"
+          [disabled]="lines.length===1"
+          (click)="lines.splice(i,1)"
+          aria-label="Remove order line"
+        >
+          <sr-icon name="close" />
+        </button>
+      </div>
+      }
+    </div>
+    <button
+      type="button"
+      class="btn small"
+      (click)="lines.push({sku:'',qty:1})"
+      [disabled]="lines.length>=50"
+    >
+      <sr-icon name="plus" />Add line</button
+    ><label class="note-label"
+      >Order note <span class="subtle">(optional)</span
+      ><textarea
+        name="note"
+        [(ngModel)]="note"
+        maxlength="500"
+        rows="2"
+        placeholder="Instructions for the warehouse team"
+      ></textarea>
+    </label>
+    <div class="order-total">
+      <span>Order total</span><strong>{{total()|number}} ₸</strong>
+    </div>
+    <div class="notice mint">
+      <sr-icon name="shield" /><span
+        >Availability is checked again by the server. If any line is
+        unavailable, the entire order is rejected.</span
+      >
+    </div>
+    @if(s.error()){
+    <div class="error" role="alert">{{s.error()}}</div>
+    }
+    <div class="modal-actions">
+      <button type="button" class="btn" (click)="creating.set(false)">
+        Cancel</button
+      ><button class="btn primary" [disabled]="!f.valid||s.busy()">
+        {{s.busy()?'Confirming…':'Confirm & reserve stock'}}
+      </button>
+    </div>
+  </form></sr-modal
+>} @if(selected();as o){<sr-modal
+  [title]="o.order_id"
+  [wide]="true"
+  (closed)="detail.set('');pending.set('')"
+  ><div class="order-detail-top">
+    <div>
+      <h3>{{o.shop_name}}</h3>
+      <p>
+        {{o.channel==='website'?'Website':'Phone / sales manager'}} ·
+        {{o.confirmed_at|date:'dd MMM y, HH:mm'}}
+      </p>
+      <small>Confirmed by {{o.staff_name}}</small>
+    </div>
+    <span class="badge blue">{{o.status}}</span>
+  </div>
+  <div class="order-timeline">
+    <span class="done">Confirmed</span><i></i
+    ><span [class.done]="o.status==='packed'||o.status==='shipped'">Packed</span
+    ><i></i><span [class.done]="o.status==='shipped'">Shipped</span>
+  </div>
+  @if(o.status==='cancelled'){
+  <div class="notice">Order cancelled. All reserved units were released.</div>
+  }
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Unit price</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(line of o.lines;track line.sku){
+        <tr>
+          <td>
+            <strong>{{line.product_name}}</strong><small>{{line.sku}}</small>
+          </td>
+          <td>{{line.qty_reserved}}</td>
+          <td>{{line.unit_price_kzt|number}} ₸</td>
+          <td>{{line.qty_reserved*line.unit_price_kzt|number}} ₸</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="order-total">
+    <span>Total</span><strong>{{o.total_kzt|number}} ₸</strong>
+  </div>
+  @if(o.note){
+  <div class="note-box">
+    <strong>Warehouse note</strong>
+    <p>{{o.note}}</p>
+  </div>
+  } @if(o.stale){
+  <div class="notice amber">
+    <sr-icon name="alert" />This reservation is older than 14 days. Confirm with
+    the customer before cancelling.
+  </div>
+  }
+  @if(s.warehouse()&&['confirmed','packed'].includes(o.status)){@if(pending()){
+  <div class="confirmation">
+    <strong
+      >{{pending()==='cancel'?'Cancel order and release all reserved
+      units?':pending()==='ship'?'Confirm physical shipment?':'Mark this order
+      as packed?'}}</strong
+    >
+    <p>
+      {{pending()==='ship'?'This reduces physical stock and closes the
+      reservation. This step cannot be undone.':'The change applies to every
+      line in this order.'}}
+    </p>
+    <div class="button-group">
+      <button class="btn" (click)="pending.set('')">Go back</button
+      ><button
+        [class]="'btn '+(pending()==='cancel'?'danger':'primary')"
+        [disabled]="s.busy()"
+        (click)="transition(o)"
+      >
+        {{s.busy()?'Saving…':'Confirm action'}}
+      </button>
+    </div>
+  </div>
+  }@else{
+  <div class="modal-actions">
+    <button class="btn danger-outline" (click)="pending.set('cancel')">
+      Cancel order</button
+    >@if(o.status==='confirmed'){<button
+      class="btn"
+      (click)="pending.set('pack')"
+    >
+      Mark as packed</button
+    >}<button class="btn primary" (click)="pending.set('ship')">
+      Ship order<sr-icon name="arrow" />
+    </button>
+  </div>
+  }}@if(s.error()){
+  <div class="error" role="alert">{{s.error()}}</div>
+  }</sr-modal
+>}
