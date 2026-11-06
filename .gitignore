@@ -29,3 +29,10 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local course and defence materials
+/docs/defence/
+/docs/DEFENCE.md
+/docs/TEAM.md
+/docs/CONTRIBUTION.md
+/docs/CRITERIA.md
