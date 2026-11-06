@@ -2,6 +2,9 @@
 
 Stockroom is our course project for a small warehouse that sells phone accessories. We use Angular for the interface, Django for the API, and SQLite for the database. The app lets staff track products, reserve stock for customer orders, receive deliveries, and see who changed the stock.
 
+- [User guide](docs/USER_GUIDE.md) for staff who work with products, orders, and deliveries.
+- [Developer guide](docs/DEVELOPER_GUIDE.md) for contributors who run, change, test, or recover the app.
+
 ## Run it on Windows
 
 You need Git, Python 3.11 or newer, and Node.js 22.22.3 or later in the 22.x line (or 24.15.0 or later in the 24.x line). The setup also works with Python 3.11 from MSYS2 if `python` is on your PATH.

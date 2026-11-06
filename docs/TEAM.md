@@ -6,7 +6,7 @@
 | Aksungkar 24B031908 | Backend | inventory/views.py, services.py, serializers.py | Остаток проверяется сервером; резерв, отмена, отгрузка и history атомарны |
 | Akylbek 24B032013 | База | inventory/models.py, migrations, database/queries.sql | Связанные таблицы, ключи, ограничения, реальные 18 товаров и SQL |
 | Dias 24B032021 | QA | inventory/tests.py, qa | 15 тестов, 20 записей, ручной checklist и фактические результаты |
-| Oren 24B031750 | Интеграция и релиз | config/urls.py, store.ts, proxy.conf.json, setup/start.bat | Полный путь frontend → API → DB и повторяемый запуск из чистого клона |
+| Oren 24B031750 | Backup & Recovery | maintenance.py, run_stockroom.py, integration/restore.py | План восстановления и показ возврата заказа, остатка и истории из копии |
 
 ## Nurdaulet: порядок чтения
 
@@ -51,8 +51,8 @@ erDiagram
 
 Открой test_01: GIVEN 10 on shelf и 6 reserved, WHEN request 5, THEN 409 и available остаётся 4. test_07 намеренно ломает history и проверяет rollback. test_15 содержит 20 входных записей. qa/http_check.py проверяет два одновременных канала отдельными HTTP-запросами. Объясняй фактически выполненные свои проверки отдельно от приложенных результатов ИИ.
 
-## Oren: интеграция и релиз
+## Oren: Backup & Recovery
 
-Обычный запуск — Django отдаёт собранный Angular и API на одном origin. При разработке Angular 4200 использует proxy к Django 8000. Cookie session и csrf передаются браузером/Store, пароль в localStorage не сохраняется.
+Прочитай run_stockroom.py → maintenance.py → integration/restore.py. Объясни, когда создаётся снимок SQLite, где хранится копия и почему для восстановления после потери компьютера нужна копия на отдельном носителе.
 
-Клонируйте [репозиторий команды](https://github.com/rage7even/Stockroom) и соберите Angular по [README](../README.md). Каждый участник делает собственную ветку, вносит изменение, проверяет его и открывает pull request. Интегратор проверяет, что после объединения изменений проект можно запустить из чистого клона и пройти сценарий заказа. Рабочая БД, venv, backups и node_modules исключены .gitignore. Приложенная database/demo.db содержит только вымышленные данные.
+Личный план — провести восстановление на отдельной учебной копии проекта и показать, что вернулись номер тестового заказа, доступный остаток и запись в History. Запиши дату снимка и время восстановления. [Инструкция для разработчика](DEVELOPER_GUIDE.md#run-a-recovery-drill)
