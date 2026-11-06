@@ -5,8 +5,8 @@ import { ActivatedRoute } from "@angular/router";
 import { Store, Product } from "./store";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
-import { exportCsv } from "./export";
-import qrcode from "qrcode-generator";
+
+
 @Component({
   standalone: true,
   imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal],
@@ -128,55 +128,5 @@ export class Products {
     )
       this.editor.set(false);
   }
-  export() {
-    exportCsv(
-      "stockroom-products.csv",
-      [
-        "SKU",
-        "Product",
-        "Category",
-        "Price KZT",
-        "On shelf",
-        "Reserved",
-        "Available",
-        "Location",
-      ],
-      this.filtered().map((p) => [
-        p.sku,
-        p.product_name,
-        p.category,
-        p.price_kzt,
-        p.qty_in_stock,
-        p.reserved,
-        p.available,
-        p.location,
-      ]),
-    );
-  }
-  print(p: Product) {
-    const w = window.open("", "_blank", "width=600,height=450");
-    if (!w) {
-      this.s.error.set("Allow popups to print a shelf label");
-      return;
-    }
-    w.document.title = "Stockroom shelf label";
-    for (const text of [
-      p.product_name,
-      p.sku,
-      "Shelf: " + p.location,
-      p.price_kzt + " KZT",
-    ]) {
-      const el = w.document.createElement("h2");
-      el.textContent = text;
-      w.document.body.appendChild(el);
-    }
-    const qr = qrcode(0, "M");
-    qr.addData(p.sku);
-    qr.make();
-    const image = w.document.createElement("img");
-    image.alt = "SKU QR code";
-    image.src = qr.createDataURL(5);
-    w.document.body.appendChild(image);
-    image.onload = () => w.print();
-  }
+
 }

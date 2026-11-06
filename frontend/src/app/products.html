@@ -5,9 +5,7 @@
     <p>Your catalogue, live availability and the details behind every unit.</p>
   </div>
   <div class="button-group">
-    <button class="btn" (click)="export()">
-      <sr-icon name="download" />Export</button
-    >@if(s.warehouse()){<button class="btn primary" (click)="openEditor()">
+    @if(s.warehouse()){<button class="btn primary" (click)="openEditor()">
       <sr-icon name="plus" />Add product</button
     >}
   </div>
@@ -173,8 +171,7 @@
   </div>
   }
   <div class="modal-actions">
-    <button class="btn" (click)="print(p)">Print shelf label</button
-    >@if(s.warehouse()){<button
+    @if(s.warehouse()){<button
       class="btn primary"
       (click)="openEditor(p);detail.set('')"
     >

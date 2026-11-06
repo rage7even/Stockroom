@@ -1,40 +1,36 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-if exist "%~dp0.tools\node-v22.22.3\node.exe" set "PATH=%~dp0.tools\node-v22.22.3;%PATH%"
-where python >nul 2>nul
-if errorlevel 1 (
-  echo Install Python 3.11 or newer and add it to PATH first.
-  pause
-  exit /b 1
+if exist ".venv\Scripts\python.exe" goto install
+if exist ".venv\bin\python.exe" goto install
+
+py -3 -c "import sys; sys.exit(sys.version_info < (3, 11))" >nul 2>&1
+if not errorlevel 1 (
+ py -3 -m venv .venv
+) else (
+ python -c "import sys; sys.exit(sys.version_info < (3, 11))" >nul 2>&1
+ if errorlevel 1 goto no_python
+ python -m venv .venv
 )
-where npm >nul 2>nul
-if errorlevel 1 (
-  echo Install Node.js 22.22.3 or newer first. Then reopen this window.
-  pause
-  exit /b 1
-)
-python -m venv .venv
 if errorlevel 1 goto failed
-.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+
+:install
+set "VENV_PYTHON=.venv\Scripts\python.exe"
+if not exist "%VENV_PYTHON%" set "VENV_PYTHON=.venv\bin\python.exe"
+"%VENV_PYTHON%" -m pip install -r backend\requirements.txt
 if errorlevel 1 goto failed
-pushd frontend
-call npm ci --no-audit --no-fund
-if errorlevel 1 (
-  popd
-  goto failed
-)
-call npm run build
-if errorlevel 1 (
-  popd
-  goto failed
-)
-popd
-.venv\Scripts\python.exe manage.py setup_stockroom
+"%VENV_PYTHON%" backend\manage.py migrate
 if errorlevel 1 goto failed
-echo Setup complete. Run start.bat to open Stockroom.
+"%VENV_PYTHON%" backend\manage.py seed
+if errorlevel 1 goto failed
+echo Ready. Run start.bat, then open http://127.0.0.1:8000
 pause
 exit /b 0
+:no_python
+echo Python 3.11 or newer was not found via py or python.
+pause
+exit /b 1
 :failed
-echo Setup failed. Read the error above and the README.md guide.
+echo Setup failed. Check Python installation and the error above.
 pause
 exit /b 1

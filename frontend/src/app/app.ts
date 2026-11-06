@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnDestroy } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
 import { RouterOutlet, RouterLink, RouterLinkActive } from "@angular/router";
 import { DatePipe } from "@angular/common";
 import { Store } from "./store";
@@ -10,7 +10,7 @@ import { Auth } from "./auth";
   imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, Icon, Auth],
   templateUrl: "./app.html",
 })
-export class App implements OnDestroy {
+export class App {
   s = inject(Store);
   mobile = signal(false);
   today = new Date();
@@ -37,15 +37,6 @@ export class App implements OnDestroy {
       restricted: false,
     },
   ];
-  timer: ReturnType<typeof setInterval>;
-  constructor() {
-    void this.s.initialize();
-    this.timer = setInterval(() => {
-      if (document.visibilityState === "visible")
-        void this.s.syncInventory().catch((e) => this.s.error.set(e.message));
-    }, 10000);
-  }
-  ngOnDestroy() {
-    clearInterval(this.timer);
-  }
+  async refresh(){try{await this.s.refresh();}catch(e){this.s.error.set((e as Error).message);}}
+  constructor() { void this.s.initialize(); }
 }

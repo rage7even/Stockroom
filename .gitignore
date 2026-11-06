@@ -1,30 +1,31 @@
+# Local Python and Node environments
 .venv/
+venv/
 __pycache__/
-*.pyc
-*.db-wal
-*.db-shm
-*.db-journal
-data/
-frontend/node_modules/
-frontend/.angular/
-frontend/dist/
-*.log
-.tools/
+*.py[cod]
+.pytest_cache/
+node_modules/
+.angular/
+/frontend/dist/
+/frontend/coverage/
 
-# Local defense guides; keep shared technical references.
-docs/*
-!docs/API.md
-!docs/ARCHITECTURE.md
-README_RU.md
+# Live databases, backups, and generated reports
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+!/database/demo.db
+/backend/backups/
+/backend/stale_reservations.csv
+
+# Local settings and logs
 .env
 .env.*
 !.env.example
-
-# Generated local QA evidence; scripts and input cases stay versioned.
-qa/automated_tests.txt
-qa/data_quality_run.txt
-qa/data_quality_results.csv
-qa/http_smoke_results.json
-qa/frontend_build.txt
-qa/django_migration_results.json
-qa/QA_REPORT_RU.md
+*.log
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

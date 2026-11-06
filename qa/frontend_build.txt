@@ -1,0 +1,16 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> stockroom-frontend@1.0.0 build
+> ng build
+
+❯ Building...
+✔ Building...
+Initial chunk files | Names         |  Raw size | Estimated transfer size
+main-HBJ5GU7O.js    | main          | 371.56 kB |                95.81 kB
+styles-O7UGK7KN.css | styles        |  29.26 kB |                 6.33 kB
+
+                    | Initial total | 400.81 kB |               102.15 kB
+
+Application bundle generation complete. [3.132 seconds] - 2026-11-05T20:31:17.736Z
+
+Output location: /workspace/scratch/24174c087b01/Stockroom_Study/frontend/dist/stockroom

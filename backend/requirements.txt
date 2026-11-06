@@ -1,3 +1,2 @@
 Django==5.2.19
-# Used only by the real-HTTP smoke check.
-httpx==0.28.1
+djangorestframework==3.16.1

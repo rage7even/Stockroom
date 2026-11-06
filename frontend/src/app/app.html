@@ -38,12 +38,7 @@
           Available = on shelf − reserved.<br />Every change leaves a trace.
         </p>
       </div>
-      @if(s.user()?.role==='admin'){<a
-        class="settings-link"
-        routerLink="/settings"
-        routerLinkActive="active"
-        ><sr-icon name="settings" />Settings & access</a
-      >}
+
       <div class="profile">
         <span class="avatar">{{s.user()!.full_name.charAt(0)}}</span>
         <div>
@@ -80,7 +75,7 @@
         Workspace <span>/</span> <strong>Inventory management</strong>
       </div>
       <div class="topbar-right">
-        <span class="live-pill"><i></i>Local workspace</span
+        <button class="btn small" (click)="refresh()">Refresh data</button><span class="live-pill"><i></i>Local workspace</span
         ><span class="today">{{today|date:'EEE, d MMM y'}}</span>
       </div>
     </header>

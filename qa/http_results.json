@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-06",
+  "real_HTTP": true,
+  "frontend_served": true,
+  "clients": 20,
+  "reads": 100,
+  "p95_seconds": 0.1763,
+  "target_seconds": 1.5,
+  "performance_pass": true,
+  "simultaneous_order_statuses": [
+    201,
+    409
+  ],
+  "browser_end_to_end": "NOT RUN",
+  "platform": "Linux; Windows batch not executed"
+}

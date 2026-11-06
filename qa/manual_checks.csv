@@ -1,21 +1,21 @@
-ID,Page,Action,Expected,Actual,Status
-UI-01,Login,Manager demo button fills fields,Email and password populated,,NOT RUN
-UI-02,Registration,Register with a new email,Sales account stored and signed in,,NOT RUN
-UI-03,Products,Search HOC-U72-BLK,One product and matching filtered count,,NOT RUN
-UI-04,Products,Select low stock filter,Only below-threshold products shown,,NOT RUN
-UI-05,Products,Open detail and edit product,SKU fixed and other fields save,,NOT RUN
-UI-06,Orders,Request 5 BAS-C65W-WHT with initial demo data,Rejected: only 4 available and no stock change,,NOT RUN
-UI-07,Orders,Request exactly 4 BAS-C65W-WHT,Confirmed and available becomes zero,,NOT RUN
-UI-08,Orders,Cancel that order as manager,Available returns to 4,,NOT RUN
-UI-09,Orders,Confirm pack and ship 1 unit,Physical and reserved stock drop by 1 on shipment,,NOT RUN
-UI-10,Receiving,Receive 5 HOC-U72-BLK manually,Available rises by 5 and manual history exists,,NOT RUN
-UI-11,Receiving,Reduce BAS-C65W-WHT by more than its available stock,Correction rejected,,NOT RUN
-UI-12,Customers,Add existing shop name with different case,Duplicate rejected,,NOT RUN
-UI-13,History,Filter release movements,Cancellation and actor visible,,NOT RUN
-UI-14,Sales role,Visit receiving URL directly,Manager access required,,NOT RUN
-UI-15,Admin,Deactivate a different account,Its existing session is revoked,,NOT RUN
-UI-16,Backups,Create and download a backup,Integrity checked SQLite file downloaded,,NOT RUN
-UI-17,Mobile,Open at 390px width,Navigation drawer and horizontally scrollable tables,,NOT RUN
-UI-18,Keyboard,Open dialog Tab and Escape,Focus stays in dialog and returns on close,,NOT RUN
-UI-19,Products,Export filtered products,CSV contains only displayed products,,NOT RUN
-UI-20,Offline restart,Stop and restart server after changing stock,Changes survive restart,,NOT RUN
+ID,Area,Check,Actual,Status
+1,Registration,Create a new sales account,,NOT RUN
+2,Login,Incorrect password is rejected,,NOT RUN
+3,Products,Search HOC-U72-BLK and verify count,,NOT RUN
+4,Details,Open product and compare shelf/reserved/available,,NOT RUN
+5,Product form,Add and edit a product as manager,,NOT RUN
+6,Orders,Reject 5 BAS-C65W-WHT when 4 available,,NOT RUN
+7,Orders,Reserve exactly 4 units,,NOT RUN
+8,Orders,Cancel and release reservation,,NOT RUN
+9,Orders,Pack and ship once,,NOT RUN
+10,Orders,Reject duplicate product lines,,NOT RUN
+11,Receiving,Manual receipt increases physical stock,,NOT RUN
+12,Receiving,Correction cannot consume reserve,,NOT RUN
+13,History,Actor time source and changes recorded,,NOT RUN
+14,Customers,Reject duplicate shop name,,NOT RUN
+15,Sales role,Stock/history access forbidden,,NOT RUN
+16,Admin,Manage staff through Django admin,,NOT RUN
+17,Persistence,Changes survive server restart,,NOT RUN
+18,Mobile,Check navigation and forms at 390px,,NOT RUN
+19,Keyboard,Dialog Tab Escape and focus,,NOT RUN
+20,Backup,Run maintenance and restore on a disposable copy,,NOT RUN
