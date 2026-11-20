@@ -6,10 +6,11 @@ import { effect } from "@angular/core";
 import { Icon } from "./icon";
 import { Auth } from "./auth";
 import { Notifications } from "./notifications";
+import { ThemeToggle } from "./theme-toggle";
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, Icon, Auth, Notifications],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, Icon, Auth, Notifications, ThemeToggle],
   templateUrl: "./app.html",
 })
 export class App {

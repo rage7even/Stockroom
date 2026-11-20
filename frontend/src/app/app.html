@@ -81,6 +81,7 @@
       </div>
       <div class="topbar-right">
         @if(s.warehouse()){<sr-notifications />}
+        <sr-theme-toggle />
         <button class="btn small" (click)="refresh()">Refresh data</button><span class="live-pill"><i></i>Local workspace</span
         ><span class="today">{{today|date:'EEE, d MMM y'}}</span>
       </div>

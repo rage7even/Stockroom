@@ -209,6 +209,14 @@ strong {
   width: 17px;
   height: 17px;
 }
+.theme-toggle {
+  border: 1px solid var(--line);
+}
+.auth-theme-toggle {
+  position: absolute;
+  top: 12px;
+  right: 18px;
+}
 .text-button {
   border: 0;
   background: none;

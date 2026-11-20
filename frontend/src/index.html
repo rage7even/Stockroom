@@ -6,6 +6,15 @@
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#114c3d" />
+    <script>
+      try {
+        if (localStorage.getItem("stockroom-theme") === "dark") {
+          document.documentElement.dataset.theme = "dark";
+        }
+      } catch {
+        // Use the light theme when browser storage is unavailable.
+      }
+    </script>
     <meta
       name="description"
       content="Stockroom inventory and order management for a phone-accessories warehouse."

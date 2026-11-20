@@ -2,10 +2,11 @@ import { Component, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Store, User } from "./store";
 import { Icon } from "./icon";
+import { ThemeToggle } from "./theme-toggle";
 @Component({
   selector: "sr-auth",
   standalone: true,
-  imports: [FormsModule, Icon],
+  imports: [FormsModule, Icon, ThemeToggle],
   templateUrl: "./auth.html",
 })
 export class Auth {
