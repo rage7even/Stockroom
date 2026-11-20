@@ -1,0 +1,3 @@
+sku,product_name,brand,category,price_kzt,reorder_level,location
+CSV-C30W-WHT,USB-C зарядка 30 Вт,Demo,Chargers,5990,4,CSV-A
+CSV-CBL1-BLK,Кабель USB-C 1 м,Demo,Cables,2490,5,CSV-B
