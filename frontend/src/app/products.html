@@ -158,6 +158,16 @@
       <strong>{{p.product_name}}</strong>
       <img [src]="labelImage()" alt="Code 128 barcode" />
       <span class="mono">{{p.barcode}}</span>
+      @if(p.sku === 'BAS-C65W-WHT'){
+      <img
+        class="product-qr"
+        src="assets/baseus-gan-65w-qr.png"
+        width="148"
+        height="148"
+        alt="QR code for the Baseus GaN 65W product page"
+      />
+      <span>Scan with your phone to open this product</span>
+      }
     </div>
     <button type="button" class="btn" (click)="printLabel()">Print label</button>
   </div>

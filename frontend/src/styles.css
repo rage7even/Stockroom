@@ -2364,6 +2364,10 @@ td {
   display: block;
   width: min(100%, 320px);
 }
+.printable-barcode img.product-qr {
+  width: min(100%, 148px);
+  height: auto;
+}
 .scan-preview {
   position: relative;
   overflow: hidden;
