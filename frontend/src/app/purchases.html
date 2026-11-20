@@ -1,0 +1,92 @@
+<div class="page-heading">
+  <div><h1>Purchase orders</h1><p>Track orders placed with suppliers and the stock still on its way.</p></div>
+  @if(s.warehouse()){
+    <div class="button-group">
+      <a class="btn" routerLink="/suppliers">Suppliers</a>
+      <button class="btn primary" (click)="openCreate()" [disabled]="loading() || !activeSuppliers().length">New purchase order</button>
+    </div>
+  }
+</div>
+@if(s.warehouse()){
+  @if(error() && !creating() && !selected()){<div class="error" role="alert">{{error()}}</div>}
+  <section class="panel">
+    <div class="toolbar">
+      <label>Status
+        <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <option value="all">All orders</option><option value="ordered">Ordered</option>
+          <option value="in_transit">In transit</option><option value="partial">Partially received</option>
+          <option value="received">Received</option>
+        </select>
+      </label>
+      <button class="btn small" (click)="load()" [disabled]="loading()">Refresh orders</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Order</th><th>Supplier</th><th>Expected</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        @for(order of filtered(); track order.id){
+          <tr>
+            <td><strong>PO-{{order.id}}</strong><small>{{order.created_at | date:'dd MMM yyyy'}}</small></td>
+            <td>{{order.supplier_name}}</td><td>{{order.expected_on | date:'dd MMM yyyy'}}</td>
+            <td><span class="badge" [class.green]="order.status === 'received'" [class.amber]="order.status !== 'received'">{{statusLabels[order.status]}}</span></td>
+            <td><a class="btn small" routerLink="/purchases" [queryParams]="{order: order.id}">View order</a></td>
+          </tr>
+        } @empty {<tr><td colspan="5" class="empty">{{loading() ? 'Loading orders…' : 'No matching purchase orders.'}}</td></tr>}
+      </tbody>
+    </table></div>
+  </section>
+} @else {<section class="panel empty-state"><h2>Manager access required</h2></section>}
+
+@if(creating() && !loading() && s.warehouse()){
+  <sr-modal title="New purchase order" [wide]="true" (closed)="closeOverlay()">
+    <form class="modal-form" (ngSubmit)="create()">
+      <label>Supplier
+        <select name="supplier" [ngModel]="supplierId()" (ngModelChange)="supplierId.set($event); quantities.set({})" required>
+          <option [ngValue]="null">Choose a supplier</option>
+          @for(supplier of activeSuppliers(); track supplier.id){<option [ngValue]="supplier.id">{{supplier.name}}</option>}
+        </select>
+      </label>
+      @if(currentSupplier(); as supplier){
+        <p class="subtle">Estimated lead time {{supplier.lead_days}} days.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Unit cost</th><th>Supplier stock</th><th>Order quantity</th></tr></thead>
+          <tbody>
+            @for(offer of supplier.offers; track offer.sku){
+              <tr>
+                <td><strong>{{offer.product_name}}</strong><small>{{offer.sku}}</small></td>
+                <td>{{offer.unit_cost | number}} ₸</td><td>{{offer.available_qty ?? 'Unknown'}}</td>
+                <td><input class="cart-quantity" type="number" min="0" [max]="offer.available_qty ?? 100000"
+                  [attr.aria-label]="'Order quantity for ' + offer.product_name" [name]="offer.sku"
+                  [ngModel]="quantities()[offer.sku] || 0" (ngModelChange)="setQuantity(offer.sku, $event)" /></td>
+              </tr>
+            } @empty {<tr><td colspan="4" class="empty">This supplier has no offers.</td></tr>}
+          </tbody>
+        </table></div>
+      }
+      @if(error()){<div class="error" role="alert">{{error()}}</div>}
+      <div class="button-group"><button class="btn primary" [disabled]="busy() || !validOrder()">Place purchase order</button></div>
+    </form>
+  </sr-modal>
+} @else if(selected(); as order){
+  <sr-modal [title]="'PO-' + order.id + ' · ' + order.supplier_name" [wide]="true" (closed)="closeOverlay()">
+    <div class="workflow-stack">
+      <div class="detail-meta">
+        <div><span>Status</span><strong>{{statusLabels[order.status]}}</strong></div>
+        <div><span>Expected delivery</span><strong>{{order.expected_on | date:'dd MMM yyyy'}}</strong></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Product</th><th>Ordered</th><th>Received</th><th>Remaining</th><th>Unit cost</th></tr></thead>
+        <tbody>
+          @for(line of order.lines; track line.sku){
+            <tr><td><strong>{{line.product_name}}</strong><small>{{line.sku}}</small></td>
+              <td>{{line.ordered}}</td><td>{{line.received}}</td><td>{{line.remaining}}</td><td>{{line.unit_cost | number}} ₸</td></tr>
+          }
+        </tbody>
+      </table></div>
+      @if(error()){<div class="error" role="alert">{{error()}}</div>}
+      <div class="button-group">
+        @if(order.status === 'ordered'){<button class="btn" (click)="ship(order)" [disabled]="busy()">Mark in transit</button>}
+        <a class="btn primary" routerLink="/purchase-receiving" [queryParams]="{order: order.id}">{{order.status === 'received' ? 'View receipts' : 'Receive delivery'}}</a>
+      </div>
+    </div>
+  </sr-modal>
+}
