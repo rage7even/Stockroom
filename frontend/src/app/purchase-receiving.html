@@ -1,0 +1,70 @@
+<div class="page-heading">
+  <div><h1>Purchase receiving</h1><p>Count goods against the supplier order before adding them to stock.</p></div>
+  @if(s.warehouse()){<a class="btn" routerLink="/purchases">Purchase orders</a>}
+</div>
+@if(s.warehouse()){
+  <div class="workflow-stack">
+    <section class="panel workflow-form">
+      <label>Purchase order
+        <select [ngModel]="selectedId()" (ngModelChange)="choose($event)" [disabled]="saving() || scanning() || loading()">
+          <option [ngValue]="null">Choose a purchase order</option>
+          @for(order of rows(); track order.id){
+            <option [ngValue]="order.id">PO-{{order.id}} · {{order.supplier_name}} · {{statusLabels[order.status]}}</option>
+          }
+        </select>
+      </label>
+      <div class="button-group">
+        @if(selected()?.status !== 'received' && selected() && !scanning() && !saving() && !loading()){
+          <sr-barcode-scan [label]="lastScanned() ? 'Scan next item' : 'Scan barcode'" (scanned)="scan($event)" />
+        }
+        <button type="button" class="btn" (click)="load()" [disabled]="loading() || saving() || scanning()">Reload orders</button>
+      </div>
+      @if(loading()){<p role="status">Loading orders…</p>}
+      @if(error()){<div class="error" role="alert">{{error()}}</div>}
+      @if(lastScanned()){<p role="status">Counted {{lastScanned()}} · {{quantities()[lastScanned()]}} in this receipt.</p>}
+    </section>
+    @if(selected(); as order){
+      <section class="panel">
+        <div class="panel-heading"><h2>PO-{{order.id}} · {{order.supplier_name}}</h2><span class="badge">{{statusLabels[order.status]}}</span></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Product</th><th>Ordered</th><th>Already received</th><th>Receive now</th><th>Still expected</th></tr></thead>
+          <tbody>
+            @for(line of order.lines; track line.sku){
+              <tr [class.last-scanned]="lastScanned() === line.sku">
+                <td><strong>{{line.product_name}}</strong><small>{{line.sku}}</small></td>
+                <td>{{line.ordered}}</td><td>{{line.received}}</td>
+                <td><input class="cart-quantity" type="number" min="0" [max]="line.remaining"
+                  [attr.aria-label]="'Receive quantity for ' + line.product_name"
+                  [disabled]="!line.remaining || saving() || scanning() || loading()"
+                  [ngModel]="quantities()[line.sku] || 0" (ngModelChange)="setQuantity(line.sku, $event)" /></td>
+                <td>{{line.remaining}}</td>
+              </tr>
+            }
+          </tbody>
+        </table></div>
+        @if(order.status !== 'received'){
+          <div class="purchase-confirm">
+            <strong>{{total()}} units in this receipt</strong>
+            <button class="btn primary" (click)="confirm(order)" [disabled]="!valid() || scanning() || saving() || loading()">Confirm receipt</button>
+          </div>
+        }
+      </section>
+      @if(order.receipts.length){
+        <section class="panel">
+          <div class="panel-heading"><h2>Receipt history</h2></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Received at</th><th>Staff member</th><th>Items received</th></tr></thead>
+            <tbody>
+              @for(receipt of order.receipts; track receipt.id){
+                <tr><td>{{receipt.created_at | date:'dd MMM yyyy, HH:mm'}}</td><td>{{receipt.staff_name}}</td>
+                  <td>@for(line of receipt.lines; track line.sku){<div>{{line.qty}} × {{line.sku}}</div>}</td></tr>
+              }
+            </tbody>
+          </table></div>
+        </section>
+      }
+    } @else if(!loading()){
+      <section class="panel empty-state"><h2>{{selectedId() ? 'Purchase order not found' : 'Choose an order to receive'}}</h2></section>
+    }
+  </div>
+} @else {<section class="panel empty-state"><h2>Manager access required</h2></section>}
