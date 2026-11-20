@@ -1,0 +1,59 @@
+Found 20 test(s).
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+Operations to perform:
+  Synchronize unmigrated apps: messages, rest_framework, staticfiles
+  Apply all migrations: admin, auth, contenttypes, inventory, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0001_initial... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+  Applying inventory.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying inventory.0002_history... OK
+  Applying inventory.0003_week11... OK
+  Applying inventory.0004_support_profile_returns... OK
+  Applying inventory.0005_issue_attachment... OK
+  Applying sessions.0001_initial... OK
+System check identified no issues (0 silenced).
+test_csv_import_is_atomic_and_export_contains_data (inventory.test_week11.Week11Tests.test_csv_import_is_atomic_and_export_contains_data) ... ok
+test_drafts_persist_and_confirm_once (inventory.test_week11.Week11Tests.test_drafts_persist_and_confirm_once) ... ok
+test_issue_attachment_is_available_to_author_and_support (inventory.test_week11.Week11Tests.test_issue_attachment_is_available_to_author_and_support) ... ok
+test_issue_visibility_and_profile (inventory.test_week11.Week11Tests.test_issue_visibility_and_profile) ... ok
+test_return_splits_stock_and_enforces_limit (inventory.test_week11.Week11Tests.test_return_splits_stock_and_enforces_limit) ... ok
+test_01_acceptance (inventory.tests.StockroomTests.test_01_acceptance) ... ok
+test_02_exact_stock (inventory.tests.StockroomTests.test_02_exact_stock) ... ok
+test_03_reserve_without_shelf_change (inventory.tests.StockroomTests.test_03_reserve_without_shelf_change) ... ok
+test_04_cancel_once (inventory.tests.StockroomTests.test_04_cancel_once) ... ok
+test_05_pack_and_ship (inventory.tests.StockroomTests.test_05_pack_and_ship) ... ok
+test_06_atomic_multiline (inventory.tests.StockroomTests.test_06_atomic_multiline) ... ok
+test_07_audit_failure_rolls_back (inventory.tests.StockroomTests.test_07_audit_failure_rolls_back) ... ok
+test_08_permissions (inventory.tests.StockroomTests.test_08_permissions) ... ok
+test_09_staff_login_and_csrf (inventory.tests.StockroomTests.test_09_staff_login_and_csrf) ... ok
+test_10_receiving_and_audit (inventory.tests.StockroomTests.test_10_receiving_and_audit) ... ok
+test_11_reserved_protected (inventory.tests.StockroomTests.test_11_reserved_protected) ... ok
+test_12_data_rules (inventory.tests.StockroomTests.test_12_data_rules) ... ok
+test_13_history_and_low_unreserved (inventory.tests.StockroomTests.test_13_history_and_low_unreserved) ... ok
+test_14_historical_price (inventory.tests.StockroomTests.test_14_historical_price) ... ok
+test_15_twenty_data_records (inventory.tests.StockroomTests.test_15_twenty_data_records) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.574s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
