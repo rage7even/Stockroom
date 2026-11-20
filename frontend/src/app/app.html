@@ -22,13 +22,13 @@
     <p class="nav-label">WORKSPACE</p>
     <nav aria-label="Main navigation">
       @for(item of navigation;track
-      item.path){@if(!item.restricted||s.warehouse()){<a
+      item.path){@if((!item.restricted||s.warehouse()) && (!s.support() || item.path==='/issues') && (!s.user()?.shop_id || item.path!=='/customers')){<a
         [routerLink]="item.path"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{exact:true}"
         (click)="mobile.set(false)"
-        ><sr-icon [name]="item.icon" /><span>{{item.label}}</span
-        >@if(item.path==='/orders'&&s.openOrders().length){<b>{{s.openOrders().length}}</b>}</a
+        ><sr-icon [name]="item.icon" /><span>{{s.support() ? 'Issue queue' : item.label}}</span
+        >@if(item.path==='/cart' && s.cart()?.lines.length){<b>{{s.cart()!.lines.length}}</b>}@if(item.path==='/orders'&&s.openOrders().length){<b>{{s.openOrders().length}}</b>}</a
       >}}
     </nav>
     <div class="sidebar-bottom">
@@ -38,17 +38,17 @@
           Available = on shelf − reserved.<br />Every change leaves a trace.
         </p>
       </div>
-      @if(s.user()?.role==='admin'){<a
-        class="settings-link"
-        routerLink="/settings"
-        routerLinkActive="active"
-        ><sr-icon name="settings" />Settings & access</a
-      >}
+
       <div class="profile">
-        <span class="avatar">{{s.user()!.full_name.charAt(0)}}</span>
+        <span class="avatar">@if(s.user()!.avatar){
+          <img [src]="s.user()!.avatar" alt="" />
+        } @else {
+          {{s.user()!.full_name.charAt(0)}}
+        }</span>
         <div>
-          <strong>{{s.user()!.full_name}}</strong
-          ><small>{{s.user()!.role}}</small>
+          <strong>{{s.user()!.full_name}}</strong>
+          <a class="text-link" routerLink="/profile" (click)="mobile.set(false)">Edit profile</a>
+          <small>{{s.support() ? 'Tech Support' : (s.user()!.shop_name || s.user()!.role)}}</small>
         </div>
         <button
           class="icon-button"
@@ -80,7 +80,8 @@
         Workspace <span>/</span> <strong>Inventory management</strong>
       </div>
       <div class="topbar-right">
-        <span class="live-pill"><i></i>Local workspace</span
+        @if(s.warehouse()){<sr-notifications />}
+        <button class="btn small" (click)="refresh()">Refresh data</button><span class="live-pill"><i></i>Local workspace</span
         ><span class="today">{{today|date:'EEE, d MMM y'}}</span>
       </div>
     </header>

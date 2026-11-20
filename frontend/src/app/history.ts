@@ -3,7 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
 import { Store } from "./store";
 import { Icon } from "./icon";
-import { exportCsv } from "./export";
+
 @Component({
   standalone: true,
   imports: [FormsModule, DatePipe, Icon],
@@ -20,6 +20,8 @@ export class History {
     "sale",
     "correction",
     "write_off",
+    "store_return",
+    "purchase_receipt",
   ];
   filtered = computed(() =>
     this.s
@@ -32,31 +34,5 @@ export class History {
             .includes(this.query().toLowerCase()),
       ),
   );
-  export() {
-    exportCsv(
-      "stockroom-history.csv",
-      [
-        "UTC time",
-        "Staff",
-        "SKU",
-        "Type",
-        "Shelf delta",
-        "Reserved delta",
-        "Source",
-        "Order",
-        "Note",
-      ],
-      this.filtered().map((m) => [
-        m.moved_at,
-        m.staff_name,
-        m.sku,
-        m.movement_type,
-        m.physical_delta,
-        m.reserved_delta,
-        m.source,
-        m.order_id,
-        m.note,
-      ]),
-    );
-  }
+
 }

@@ -1,15 +1,17 @@
 import { Component, inject, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DecimalPipe, DatePipe } from "@angular/common";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { Store, Product } from "./store";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
-import { exportCsv } from "./export";
-import qrcode from "qrcode-generator";
+import { BarcodeScan } from "./barcode-scan";
+import { barcodeImage } from "./code128";
+
+
 @Component({
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal],
+  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal, RouterLink, BarcodeScan],
   templateUrl: "./products.html",
 })
 export class Products {
@@ -42,6 +44,10 @@ export class Products {
   selected = computed(() =>
     this.s.products().find((p) => p.sku === this.detail()),
   );
+  labelImage = computed(() => {
+    const product = this.selected();
+    return product ? barcodeImage(product.barcode) : "";
+  });
   productHistory = computed(() =>
     this.s
       .movements()
@@ -73,11 +79,27 @@ export class Products {
       ),
   );
   constructor() {
-    this.route.queryParamMap.subscribe((p) =>
+    this.route.queryParamMap.subscribe((p) => {
       this.stock.set(
         ["low", "out"].includes(p.get("stock") || "") ? p.get("stock")! : "all",
-      ),
-    );
+      );
+      if (p.has("sku")) this.detail.set(p.get("sku")!);
+    });
+  }
+  async scan(code: string) {
+    this.s.error.set("");
+    try {
+      const product = await this.s.findBarcode(code);
+      this.s.products.update(rows => rows.some(row => row.sku === product.sku)
+        ? rows.map(row => row.sku === product.sku ? product : row)
+        : [...rows, product]);
+      this.detail.set(product.sku);
+    } catch (error) {
+      this.s.error.set((error as Error).message);
+    }
+  }
+  printLabel() {
+    window.print();
   }
   reset() {
     this.query.set("");
@@ -128,55 +150,5 @@ export class Products {
     )
       this.editor.set(false);
   }
-  export() {
-    exportCsv(
-      "stockroom-products.csv",
-      [
-        "SKU",
-        "Product",
-        "Category",
-        "Price KZT",
-        "On shelf",
-        "Reserved",
-        "Available",
-        "Location",
-      ],
-      this.filtered().map((p) => [
-        p.sku,
-        p.product_name,
-        p.category,
-        p.price_kzt,
-        p.qty_in_stock,
-        p.reserved,
-        p.available,
-        p.location,
-      ]),
-    );
-  }
-  print(p: Product) {
-    const w = window.open("", "_blank", "width=600,height=450");
-    if (!w) {
-      this.s.error.set("Allow popups to print a shelf label");
-      return;
-    }
-    w.document.title = "Stockroom shelf label";
-    for (const text of [
-      p.product_name,
-      p.sku,
-      "Shelf: " + p.location,
-      p.price_kzt + " KZT",
-    ]) {
-      const el = w.document.createElement("h2");
-      el.textContent = text;
-      w.document.body.appendChild(el);
-    }
-    const qr = qrcode(0, "M");
-    qr.addData(p.sku);
-    qr.make();
-    const image = w.document.createElement("img");
-    image.alt = "SKU QR code";
-    image.src = qr.createDataURL(5);
-    w.document.body.appendChild(image);
-    image.onload = () => w.print();
-  }
+
 }

@@ -8,6 +8,22 @@
     <sr-icon name="plus" />Create order
   </button>
 </div>
+@if(drafts().length){
+<section class="panel">
+  <div class="toolbar"><strong>Draft orders</strong></div>
+  <div class="table-wrap">
+    <table><tbody>
+      @for(draft of drafts();track draft.id){
+      <tr>
+        <td>{{draft.note || (draft.lines[0]?.sku || 'Untitled order')}}</td>
+        <td><button class="btn small" (click)="openDraft(draft)">Continue</button></td>
+        <td><button class="btn small" [disabled]="s.busy()" (click)="discardDraft(draft)">Discard</button></td>
+      </tr>
+      }
+    </tbody></table>
+  </div>
+</section>
+}
 @if(s.staleOrders().length){
 <div class="notice amber">
   <sr-icon name="history" /><span
@@ -56,7 +72,7 @@
         @for(o of filtered();track o.order_id){
         <tr>
           <td>
-            <button class="text-button" (click)="detail.set(o.order_id)">
+            <button class="text-button" (click)="openOrder(o)">
               {{o.order_id}}</button
             >@if(o.stale){<small class="warning-text">Over 14 days old</small>}
           </td>
@@ -76,7 +92,7 @@
           <td>
             <button
               class="icon-button"
-              (click)="detail.set(o.order_id)"
+              (click)="openOrder(o)"
               [attr.aria-label]="'View '+o.order_id"
             >
               <sr-icon name="arrow" />
@@ -103,14 +119,14 @@
   ><form class="modal-form" (ngSubmit)="submit()" #f="ngForm">
     <div class="form-grid">
       <label
-        >Customer<select name="customer" [(ngModel)]="customerId" required>
+      >Customer<select name="customer" [ngModel]="customerId" (ngModelChange)="customerId=$event; queueDraft()" required>
           <option [ngValue]="null" disabled>Select a shop</option>
           @for(c of s.customers();track c.customer_id){
           <option [ngValue]="c.customer_id">{{c.shop_name}}</option>
           }
         </select></label
       ><label
-        >Sales channel<select name="channel" [(ngModel)]="channel">
+      >Sales channel<select name="channel" [ngModel]="channel" (ngModelChange)="channel=$event; queueDraft()">
           <option value="sales_manager">Phone / sales manager</option>
           <option value="website">Website</option>
         </select></label
@@ -130,7 +146,7 @@
       @for(line of lines;track $index;let i=$index){
       <div class="order-line">
         <label
-          >Product<select [name]="'sku'+i" [(ngModel)]="line.sku" required>
+        >Product<select [name]="'sku'+i" [ngModel]="line.sku" (ngModelChange)="line.sku=$event; queueDraft()" required>
             <option value="" disabled>Select a product</option>
             @for(p of s.products();track p.sku){
             <option [value]="p.sku">
@@ -145,7 +161,8 @@
           >Quantity<input
             type="number"
             [name]="'qty'+i"
-            [(ngModel)]="line.qty"
+            [ngModel]="line.qty"
+            (ngModelChange)="line.qty=$event; queueDraft()"
             required
             min="1"
             max="100000"
@@ -154,7 +171,7 @@
           type="button"
           class="icon-button"
           [disabled]="lines.length===1"
-          (click)="lines.splice(i,1)"
+          (click)="lines.splice(i,1); queueDraft()"
           aria-label="Remove order line"
         >
           <sr-icon name="close" />
@@ -165,7 +182,7 @@
     <button
       type="button"
       class="btn small"
-      (click)="lines.push({sku:'',qty:1})"
+      (click)="lines.push({sku:'',qty:1}); queueDraft()"
       [disabled]="lines.length>=50"
     >
       <sr-icon name="plus" />Add line</button
@@ -173,7 +190,8 @@
       >Order note <span class="subtle">(optional)</span
       ><textarea
         name="note"
-        [(ngModel)]="note"
+        [ngModel]="note"
+        (ngModelChange)="note=$event; queueDraft()"
         maxlength="500"
         rows="2"
         placeholder="Instructions for the warehouse team"
@@ -192,8 +210,11 @@
     <div class="error" role="alert">{{s.error()}}</div>
     }
     <div class="modal-actions">
+      <small role="status">{{draftStatus()}}</small>
       <button type="button" class="btn" (click)="creating.set(false)">
-        Cancel</button
+        Close</button
+      ><button type="button" class="btn" [disabled]="s.busy()" (click)="saveAndClose()">
+        Save draft</button
       ><button class="btn primary" [disabled]="!f.valid||s.busy()">
         {{s.busy()?'Confirming…':'Confirm & reserve stock'}}
       </button>
@@ -259,6 +280,43 @@
     <sr-icon name="alert" />This reservation is older than 14 days. Confirm with
     the customer before cancelling.
   </div>
+  }
+  @if((s.warehouse() || s.user()?.shop_id === o.customer_id) && o.status === 'shipped'){
+    <h3 class="section-subhead">Store returns</h3>
+    @for(item of returnRecords();track item.id){
+      <div class="note-box">
+        <strong>{{item.sku}} · {{item.good}} sellable · {{item.defective}} defective</strong>
+        <p>{{item.reason}} @if(item.comment){ · {{item.comment}} }</p>
+        <small>{{item.staff}} · {{item.created_at | date:'short'}}</small>
+        <p><span class="badge blue">{{item.status}}</span></p>
+        @if(s.warehouse() && item.status === 'pending'){
+          <div class="button-group">
+            <button class="btn primary" [disabled]="s.busy()" (click)="reviewReturn(o, item, 'received')">Receive return</button>
+            <button class="btn" [disabled]="s.busy()" (click)="reviewReturn(o, item, 'rejected')">Reject</button>
+          </div>
+        }
+      </div>
+    }
+    @if(s.user()?.shop_id === o.customer_id){
+    <form class="modal-form" (ngSubmit)="submitReturn(o)" #rf="ngForm">
+      <label>Returned product
+        <select name="returnSku" [(ngModel)]="returnForm.sku" required>
+          @for(line of o.lines;track line.sku){
+            <option [value]="line.sku">{{line.product_name}} · {{remainingReturn(o, line.sku)}} returnable</option>
+          }
+        </select>
+      </label>
+      <div class="form-grid">
+        <label>Sellable<input name="good" type="number" min="0" step="1" [(ngModel)]="returnForm.good" required /></label>
+        <label>Defective<input name="defective" type="number" min="0" step="1" [(ngModel)]="returnForm.defective" required /></label>
+      </div>
+      <label>Reason<input name="reason" maxlength="100" [(ngModel)]="returnForm.reason" required /></label>
+      <label>Comment<textarea name="comment" maxlength="300" [(ngModel)]="returnForm.comment"></textarea></label>
+      <div class="modal-actions">
+        <button class="btn primary" [disabled]="!rf.valid || s.busy() || returnForm.good + returnForm.defective <= 0">Send return request</button>
+      </div>
+    </form>
+    }
   }
   @if(s.warehouse()&&['confirmed','packed'].includes(o.status)){@if(pending()){
   <div class="confirmation">

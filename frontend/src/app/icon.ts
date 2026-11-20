@@ -24,6 +24,8 @@ export class Icon {
     box: "M3 7 12 2l9 5v10l-9 5-9-5V7Zm0 0 9 5 9-5M12 12v10M7.5 4.5l9 5",
     grid: "M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z",
     orders: "M6 3h12v19l-3-2-3 2-3-2-3 2V3ZM9 7h6M9 11h6M9 15h3",
+    cart: "M2 3h3l2.2 12h12l2-8H6M10 20a1 1 0 1 0-2 0 1 1 0 0 0 2 0Zm9 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0Z",
+    return: "M9 6 4 11l5 5M4 11h11a5 5 0 0 1 0 10h-4",
     receive: "M12 3v12m-4-4 4 4 4-4M4 14v6h16v-6",
     history: "M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2",
     users:
@@ -46,6 +48,10 @@ export class Icon {
     power: "M8 3h8v3h3v16H5V6h3V3Zm4 6-3 5h6l-3 5",
     menu: "M4 6h16M4 12h16M4 18h16",
     download: "M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4",
+    scan: "M3 8V3h5m8 0h5v5m0 8v5h-5M8 21H3v-5m4-3h10",
+    bell: "M6 9a6 6 0 1 1 12 0c0 5 2 6 2 8H4c0-2 2-3 2-8m4 11a2 2 0 0 0 4 0",
+    moon: "M20.9 13.35A9 9 0 0 1 10.65 3.1 9 9 0 1 0 20.9 13.35Z",
+    sun: "M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42m-9.88 9.88-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z",
     edit: "m4 16 12-12 4 4L8 20H4v-4Zm9-9 4 4",
     shield: "M12 2 3 6v6c0 5 9 10 9 10s9-5 9-10V6l-9-4Zm-5 10 3 3 7-7",
   };
