@@ -66,3 +66,10 @@ TIME_ZONE = "Asia/Almaty"
 STATIC_URL = "/static/"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_AGE = 28800
+
+if os.environ.get("RENDER") == "true":
+    DEBUG = False
+    ALLOWED_HOSTS.append(os.environ["RENDER_EXTERNAL_HOSTNAME"])
+    CSRF_TRUSTED_ORIGINS.append(os.environ["RENDER_EXTERNAL_URL"])
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
