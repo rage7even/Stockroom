@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, input, output, signal, viewChild } from "@angular/core";
+import { afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, input, output, signal, viewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { readBarcodeRow } from "./code128";
 import { Icon } from "./icon";
@@ -19,7 +19,7 @@ type DetectorConstructor = new (options: { formats: string[] }) => Detector;
             <video #video muted playsinline aria-label="Barcode camera preview"></video>
             <span aria-hidden="true"></span>
           </div>
-          @if(camera()){<p>Hold the bars upright and fit the whole label inside the frame.</p>}
+          @if(camera()){<p>Hold the bars upright. Move closer until the full barcode fills the guide and the bars look sharp.</p>}
           @if(message()){<p role="status">{{message()}}</p>}
           <form class="modal-form" (ngSubmit)="accept(code)">
             <label>Barcode
@@ -43,6 +43,7 @@ export class BarcodeScan implements OnDestroy {
   camera = signal(false);
   message = signal("");
   code = "";
+  private readonly injector = inject(Injector);
   private stream?: MediaStream;
   private timer?: ReturnType<typeof setTimeout>;
   private request = 0;
@@ -50,7 +51,9 @@ export class BarcodeScan implements OnDestroy {
   show() {
     this.code = "";
     this.open.set(true);
-    void this.start();
+    afterNextRender(() => {
+      if (this.open() && !this.camera()) void this.start();
+    }, { injector: this.injector });
   }
 
   async start() {
@@ -60,10 +63,10 @@ export class BarcodeScan implements OnDestroy {
     }
     const request = ++this.request;
     this.camera.set(true);
-    this.message.set("Waiting for camera access…");
+    this.message.set("Opening the camera…");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
+        audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } },
       });
       if (request !== this.request || !this.video()) {
         stream.getTracks().forEach(track => track.stop());
@@ -117,7 +120,7 @@ export class BarcodeScan implements OnDestroy {
     if (ctx.canvas.width !== width) ctx.canvas.width = width;
     if (ctx.canvas.height !== 1) ctx.canvas.height = 1;
     const gray = new Uint8Array(width);
-    for (const height of [0.5, 0.42, 0.58, 0.34, 0.66]) {
+    for (const height of [0.5, 0.45, 0.55, 0.38, 0.62, 0.31, 0.69]) {
       ctx.drawImage(video, 0, Math.floor(video.videoHeight * height), width, 1, 0, 0, width, 1);
       const pixels = ctx.getImageData(0, 0, width, 1).data;
       for (let x = 0; x < width; x++) {

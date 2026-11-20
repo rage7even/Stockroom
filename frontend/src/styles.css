@@ -2355,14 +2355,17 @@ td {
 }
 .printable-barcode {
   display: grid;
+  flex: 1;
   gap: 6px;
   min-width: 0;
+  max-width: 100%;
   justify-items: start;
   color: #111;
 }
 .printable-barcode img {
   display: block;
-  width: min(100%, 320px);
+  max-width: 100%;
+  height: auto;
 }
 .printable-barcode img.product-qr {
   width: min(100%, 148px);
