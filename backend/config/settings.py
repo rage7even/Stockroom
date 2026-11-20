@@ -7,6 +7,10 @@ SECRET_KEY = os.environ.get(
 )
 DEBUG = True
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "testserver"]
+ALLOWED_HOSTS += [
+    host.strip() for host in os.environ.get("STOCKROOM_EXTRA_HOSTS", "").split(",")
+    if host.strip()
+]
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

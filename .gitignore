@@ -1,5 +1,7 @@
 # Local Python and Node environments
 .venv/
+.venv-linux/
+.venv-windows/
 venv/
 __pycache__/
 *.py[cod]
@@ -19,6 +21,7 @@ node_modules/
 !/database/demo.db
 /backend/backups/
 /backend/stale_reservations.csv
+/stockroom-docker-backups/
 
 # Local settings and logs
 .env

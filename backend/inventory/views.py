@@ -1,8 +1,10 @@
+from base64 import b64encode
 from datetime import timedelta
+from io import BytesIO
 from pathlib import Path
 from django.conf import settings
 from django.contrib.auth import authenticate, login as sign_in, logout as sign_out
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, HttpResponseRedirect, JsonResponse
 from django.middleware.csrf import get_token
 from django.utils import timezone
 from django.db import IntegrityError
@@ -34,6 +36,11 @@ def user_data(user):
         "full_name": user.full_name,
         "login": user.username,
         "role": user.role,
+        "shop_id": user.store_id,
+        "shop_name": user.shop.shop_name if user.store_id else None,
+        "phone": user.phone,
+        "job_title": user.job_title,
+        "avatar": user.avatar,
     }
 
 
@@ -43,45 +50,59 @@ def csrf(request):
     return Response({"csrfToken": get_token(request)})
 
 
-class AccountInput(serializers.Serializer):
+class LoginInput(serializers.Serializer):
     login = serializers.EmailField(max_length=150)
     password = serializers.CharField(max_length=128, trim_whitespace=False)
-    full_name = serializers.CharField(max_length=80, required=False)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-def account(request, action):
+def login(request):
     SessionAuthentication().enforce_csrf(request)
-    data = validate(AccountInput, request.data).validated_data
-    if action == "register":
-        if len(data["password"]) < 10 or len(data.get("full_name", "").strip()) < 2:
-            raise ValidationError(
-                "Enter your full name and a password of at least 10 characters."
-            )
-        if Staff.objects.filter(username=data["login"].lower()).exists():
-            raise ValidationError("This email is already registered.")
-        user = Staff.objects.create_user(
-            username=data["login"].lower(),
-            email=data["login"].lower(),
-            password=data["password"],
-            full_name=data["full_name"],
-            role="sales",
-        )
-    elif action == "login":
-        user = authenticate(
-            request, username=data["login"].lower(), password=data["password"]
-        )
-        if user is None:
-            raise ValidationError("Incorrect email or password.")
-    else:
-        raise ValidationError("Unknown account action.")
+    data = validate(LoginInput, request.data).validated_data
+    user = authenticate(
+        request, username=data["login"].lower(), password=data["password"]
+    )
+    if user is None:
+        raise ValidationError("Incorrect email or password.")
     sign_in(request, user)
-    return Response(user_data(user), status=201 if action == "register" else 200)
+    return Response(user_data(user))
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 def me(request):
+    if request.method == "PATCH":
+        class ProfileInput(serializers.Serializer):
+            full_name = serializers.CharField(max_length=80)
+            phone = serializers.RegexField(r"^\+?[0-9 ()-]{7,25}$", allow_blank=True, required=False)
+            job_title = serializers.CharField(max_length=80, allow_blank=True, required=False)
+            photo = serializers.FileField(required=False)
+            remove_photo = serializers.BooleanField(required=False)
+
+        data = validate(ProfileInput, request.data).validated_data
+        photo = data.pop("photo", None)
+        remove = data.pop("remove_photo", False)
+        if photo is not None:
+            from PIL import Image, ImageOps, UnidentifiedImageError
+
+            if photo.size > 2 * 1024 * 1024:
+                raise ValidationError("Choose a photo up to 2 MB.")
+            try:
+                with Image.open(photo, formats=["JPEG", "PNG", "WEBP"]) as source:
+                    if source.width * source.height > 16000000:
+                        raise ValidationError("Choose a photo up to 16 megapixels.")
+                    image = ImageOps.exif_transpose(source)
+                    image.thumbnail((256, 256))
+                    output = BytesIO()
+                    image.convert("RGB").save(output, "JPEG", quality=85)
+            except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError):
+                raise ValidationError("Choose a valid JPEG, PNG or WebP photo.")
+            data["avatar"] = "data:image/jpeg;base64," + b64encode(output.getvalue()).decode("ascii")
+        elif remove:
+            data["avatar"] = ""
+        for field, value in data.items():
+            setattr(request.user, field, value)
+        request.user.save(update_fields=list(data))
     return Response(user_data(request.user))
 
 
@@ -93,6 +114,8 @@ def logout(request):
 
 @api_view(["GET", "POST"])
 def products(request):
+    if request.user.role == "tech_support":
+        raise PermissionDenied("Catalogue access is unavailable to Tech Support.")
     if request.method == "GET":
         return Response(services.inventory())
     warehouse(request.user)
@@ -102,6 +125,17 @@ def products(request):
     except IntegrityError:
         raise services.Conflict("This SKU already exists.")
     return Response({"ok": True}, status=201)
+
+
+@api_view(["GET"])
+def product_barcode(request):
+    if request.user.role == "tech_support":
+        raise PermissionDenied("Catalogue access is unavailable to Tech Support.")
+    code = request.query_params.get("code", "").strip().upper()
+    matches = services.inventory(Product.objects.filter(barcode=code))
+    if not matches:
+        raise services.NotFound("No product matches this barcode.")
+    return Response(matches[0])
 
 
 @api_view(["PUT"])
@@ -118,6 +152,13 @@ def product_edit(request, sku):
 
 @api_view(["GET", "POST"])
 def customers(request):
+    if request.user.role == "tech_support":
+        raise PermissionDenied("Customer access is unavailable to Tech Support.")
+    rows = Customer.objects.order_by("shop_name")
+    if request.user.store_id:
+        if request.method != "GET":
+            raise PermissionDenied("Store accounts cannot add customers.")
+        rows = rows.filter(pk=request.user.store_id)
     if request.method == "GET":
         return Response(
             [
@@ -127,7 +168,7 @@ def customers(request):
                     "contact_name": c.contact_name,
                     "phone": c.phone,
                 }
-                for c in Customer.objects.order_by("shop_name")
+                for c in rows
             ]
         )
     form = validate(CustomerInput, request.data)
@@ -140,17 +181,22 @@ def customers(request):
 
 @api_view(["GET", "POST"])
 def orders(request):
+    if request.user.role == "tech_support":
+        raise PermissionDenied("Order access is unavailable to Tech Support.")
     if request.method == "POST":
         order = services.confirm(
             validate(OrderInput, request.data).validated_data, request.user
         )
         return Response({"order_id": order.pk}, status=201)
     rows = []
-    for o in (
+    orders_query = (
         Order.objects.select_related("customer", "staff")
         .prefetch_related("lines__product")
         .order_by("-confirmed_at")
-    ):
+    )
+    if request.user.store_id:
+        orders_query = orders_query.filter(customer_id=request.user.store_id)
+    for o in orders_query:
         lines = [
             {
                 "sku": l.product_id,
@@ -222,15 +268,21 @@ def history(request):
     )
 
 
+def api_not_found(request, path):
+    return JsonResponse({"detail": f"API endpoint not found: /api/{path}"}, status=404)
+
+
 def frontend(request, path=""):
     root = (settings.BASE_DIR.parent / "frontend/dist/stockroom/browser").resolve()
     target = (root / path).resolve()
     if not target.is_relative_to(root):
         return JsonResponse({"detail": "Not found"}, status=404)
+    if path in {"products", "orders", "receiving", "history", "customers", "profile", "issues",
+                "cart", "returns", "data", "suppliers", "purchases", "purchase-receiving"}:
+        return HttpResponseRedirect("/#/" + path)
     if not path:
         target = root / "index.html"
     if not target.is_file():
-        return JsonResponse(
-            {"detail": "Frontend build missing. See README."}, status=404
-        )
+        detail = "Not found" if path else "Frontend build missing. See README."
+        return JsonResponse({"detail": detail}, status=404)
     return FileResponse(target.open("rb"))

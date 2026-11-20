@@ -11,11 +11,17 @@ from inventory.models import Order
 class Command(BaseCommand):
     help = "Create a verified daily backup and a stale-reservation report."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--force-backup", action="store_true", help="Create a snapshot immediately."
+        )
+
     def handle(self, *args, **options):
         folder = Path(settings.DATABASES["default"]["NAME"]).parent / "backups"
         folder.mkdir(exist_ok=True)
         files = sorted(folder.glob("stockroom-*.db"))
-        if not files or timezone.now().timestamp() - files[-1].stat().st_mtime > 86400:
+        backup_due = not files or timezone.now().timestamp() - files[-1].stat().st_mtime > 86400
+        if options["force_backup"] or backup_due:
             target = folder / (
                 "stockroom-" + timezone.now().strftime("%Y%m%d-%H%M%S-%f") + ".db"
             )
@@ -27,6 +33,7 @@ class Command(BaseCommand):
                     raise RuntimeError("Backup failed integrity check")
             for old in sorted(folder.glob("stockroom-*.db"))[:-30]:
                 old.unlink()
+            self.stdout.write(f"Backup created: {target}")
         rows = Order.objects.filter(
             status__in=["confirmed", "packed"],
             confirmed_at__lt=timezone.now() - timedelta(days=14),

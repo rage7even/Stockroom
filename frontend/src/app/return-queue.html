@@ -1,0 +1,47 @@
+<div class="page-heading">
+  <div>
+    <h1>Returns &amp; defects</h1>
+    <p>Track store requests and review inspected items from the original order.</p>
+  </div>
+  @if(s.warehouse()){<button class="btn" (click)="load()" [disabled]="busy()">Refresh queue</button>}
+</div>
+@if(s.warehouse()){
+  <div class="tab-strip" aria-label="Return status">
+    @for(option of statuses; track option){
+      <button [class.selected]="status() === option" [attr.aria-pressed]="status() === option"
+        (click)="status.set(option)">{{option | titlecase}} <span>{{count(option)}}</span></button>
+    }
+  </div>
+  <section class="panel">
+    <div class="toolbar">
+      <div class="search-field">
+        <sr-icon name="search" /><input aria-label="Search returns" placeholder="Search by order, shop or product"
+          [ngModel]="query()" (ngModelChange)="query.set($event)" />
+      </div>
+    </div>
+    @if(error()){<div class="error workflow-error" role="alert">{{error()}}</div>}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Request / order</th><th>Product</th><th>Sellable</th><th>Defective</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          @for(row of filtered(); track row.id){
+            <tr>
+              <td><strong>{{row.order_id}}</strong><small>{{row.shop_name}} · {{row.created_at | date:'dd MMM y'}}</small></td>
+              <td><strong>{{row.product_name}}</strong><small>{{row.sku}} · {{row.reason}}</small></td>
+              <td>{{row.good}}</td><td>{{row.defective}}</td>
+              <td><span [class]="'badge ' + (row.status === 'received' ? 'green' : row.status === 'rejected' ? 'neutral' : 'amber')">{{row.status | titlecase}}</span></td>
+              <td><a class="btn small nowrap" routerLink="/orders" [queryParams]="{order: row.order_id}">Open order <sr-icon name="arrow" /></a></td>
+            </tr>
+          } @empty {
+            <tr><td colspan="6" class="empty">{{busy() ? 'Loading returns…' : 'No matching return requests.'}}</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+} @else {
+  <section class="panel empty-state">
+    <h2>Manager access required</h2>
+    <a class="btn" routerLink="/orders">Back to orders</a>
+  </section>
+}

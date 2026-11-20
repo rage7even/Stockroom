@@ -1,15 +1,17 @@
 import { Component, inject, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DecimalPipe, DatePipe } from "@angular/common";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, RouterLink } from "@angular/router";
 import { Store, Product } from "./store";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
+import { BarcodeScan } from "./barcode-scan";
+import { barcodeImage } from "./code128";
 
 
 @Component({
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal],
+  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal, RouterLink, BarcodeScan],
   templateUrl: "./products.html",
 })
 export class Products {
@@ -42,6 +44,10 @@ export class Products {
   selected = computed(() =>
     this.s.products().find((p) => p.sku === this.detail()),
   );
+  labelImage = computed(() => {
+    const product = this.selected();
+    return product ? barcodeImage(product.barcode) : "";
+  });
   productHistory = computed(() =>
     this.s
       .movements()
@@ -73,11 +79,27 @@ export class Products {
       ),
   );
   constructor() {
-    this.route.queryParamMap.subscribe((p) =>
+    this.route.queryParamMap.subscribe((p) => {
       this.stock.set(
         ["low", "out"].includes(p.get("stock") || "") ? p.get("stock")! : "all",
-      ),
-    );
+      );
+      if (p.has("sku")) this.detail.set(p.get("sku")!);
+    });
+  }
+  async scan(code: string) {
+    this.s.error.set("");
+    try {
+      const product = await this.s.findBarcode(code);
+      this.s.products.update(rows => rows.some(row => row.sku === product.sku)
+        ? rows.map(row => row.sku === product.sku ? product : row)
+        : [...rows, product]);
+      this.detail.set(product.sku);
+    } catch (error) {
+      this.s.error.set((error as Error).message);
+    }
+  }
+  printLabel() {
+    window.print();
   }
   reset() {
     this.query.set("");

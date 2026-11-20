@@ -1,7 +1,7 @@
 import logging
 from threading import Event, Thread
 from django.core.management import call_command
-from django.core.management.commands.runserver import Command as Runserver
+from django.contrib.staticfiles.management.commands.runserver import Command as Runserver
 
 
 class Command(Runserver):

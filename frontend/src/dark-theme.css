@@ -1,0 +1,221 @@
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #101312;
+  --ink: #edf1ee;
+  --muted: #aebbb2;
+  --line: #35423a;
+  --surface: #191f1c;
+  --surface-raised: #222b26;
+  --surface-hover: #29352e;
+  --control-line: #62756a;
+  --green: #a0dfbb;
+  --green-dark: #c0efd4;
+  --mint: #253e31;
+  --action: #236547;
+  --action-hover: #287453;
+  --amber: #f2ca83;
+  --red: #f6aaa0;
+  --amber-surface: #3d301f;
+  --red-surface: #412925;
+}
+
+/* Main surfaces and navigation */
+:root[data-theme="dark"] :is(.sidebar, .topbar, .stat-card, .panel, .modal, .auth-layout, .notification-menu, .notification-item) {
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] :is(.workspace, .sidebar-note, .live-pill, .panel-foot, .note-box, .demo-box, thead) {
+  background: var(--surface-raised);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] :where(
+  .eyebrow, .breadcrumb, .breadcrumb span, .breadcrumb strong, .nav-label,
+  .sidebar nav a:not(.active), .sidebar-note p, .profile small, .settings-link:not(.active),
+  .live-pill, .today, .page-heading p, .page-footer, .stat-top, .stat-card > small,
+  .panel-heading p, .panel-foot, th, td, td small, .table-footer, .bar-label,
+  .attention-row p, .stock-value > span, .stock-value p, .stock-value strong small,
+  .tab-strip button:not(.selected), .empty, .empty-state, .detail-hero p,
+  .detail-stats span, .detail-meta span, .detail-history > div, .detail-history small,
+  .field-help, .order-line small, .order-total, .order-detail-top p, .order-detail-top small,
+  .note-box, .receipt-product small, .receipt-row small, .receipt-preview,
+  .receiving-guide li p, .role-guide p, .loading-screen, .password-field button,
+  .auth-switch, .auth-bottom, .demo-box p, .demo-box > small
+) {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(td strong, .attention-row strong, .stock-value > strong, .bar-label strong, .empty-state h3, .section-subhead, label) {
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(th, td, .attention-row, .detail-history > div, .receipt-row, .role-guide > div) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] :is(.sidebar nav a:hover, tbody tr:hover) {
+  background: var(--surface-hover);
+}
+
+:root[data-theme="dark"] :is(
+  .workspace-icon, .stat-icon, .product-symbol, .detail-symbol, .bar-track,
+  .customer-avatar, .receipt-product, .receipt-preview
+) {
+  background: var(--mint);
+  color: var(--green);
+}
+
+:root[data-theme="dark"] :is(
+  .sidebar nav a.active, .sidebar nav b, .receiving-guide li::before,
+  .order-timeline span.done, .notification-item.unread
+) {
+  background: var(--mint);
+  color: var(--green);
+}
+
+:root[data-theme="dark"] :is(.heading-dot, .brand-dot, .sidebar-note sr-icon, .panel-heading > sr-icon, .empty-state sr-icon, .scan-input sr-icon, .role-guide strong, .demo-box > div:first-child, .receipt-preview strong) {
+  color: var(--green);
+}
+
+:root[data-theme="dark"] :is(.status-dot, .receipt-product, .notification-menu) {
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] :is(.avatar, .sand) {
+  background: #423729;
+  color: #ead0a8;
+}
+
+:root[data-theme="dark"] :is(.count, .badge, .badge.neutral, .tab-strip button span, .order-timeline span:not(.done)) {
+  background: var(--surface-hover);
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .order-timeline i {
+  background: var(--line);
+}
+
+/* Controls */
+:root[data-theme="dark"] :is(.btn, input, select, textarea, .search-field, .demo-roles button) {
+  background: var(--surface);
+  border-color: var(--control-line);
+  color: var(--ink);
+  accent-color: var(--green);
+}
+
+:root[data-theme="dark"] :is(.auth-form input, .search-field) {
+  background: var(--surface-raised);
+}
+
+:root[data-theme="dark"] .search-field input {
+  background: transparent;
+}
+
+:root[data-theme="dark"] :is(input, textarea)::placeholder {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(.icon-button, .search-field sr-icon, .attention-row > sr-icon) {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] :is(.btn:hover:not(:disabled), .icon-button:hover, .demo-roles button:hover, .notification-item:hover) {
+  background: var(--surface-hover);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] :is(.btn.primary, .brand-mark, .overview-banner, .toast, .notification-button span) {
+  background: var(--action);
+  border-color: var(--action);
+  color: white;
+}
+
+:root[data-theme="dark"] .btn.primary:hover:not(:disabled) {
+  background: var(--action-hover);
+}
+
+:root[data-theme="dark"] .overview-banner :is(.eyebrow, p) {
+  color: #dfefe5;
+}
+
+:root[data-theme="dark"] .btn.light {
+  background: #e5f5ec;
+  border-color: #e5f5ec;
+  color: #17432c;
+}
+
+:root[data-theme="dark"] .btn.light:hover:not(:disabled) {
+  background: white;
+  color: #17432c;
+}
+
+/* Status and feedback */
+:root[data-theme="dark"] :is(.mint, .badge.green, .notice.mint, .workflow-result) {
+  background: var(--mint);
+  color: var(--green-dark);
+}
+
+:root[data-theme="dark"] :is(.badge.amber, .amber, .notice.amber, .small-badge, .confirmation, .warning .stat-icon) {
+  background: var(--amber-surface);
+  color: var(--amber);
+}
+
+:root[data-theme="dark"] .stat-card.warning {
+  background: #26221a;
+  border-color: #594a34;
+}
+
+:root[data-theme="dark"] .confirmation {
+  border-color: #6b5234;
+}
+
+:root[data-theme="dark"] :is(.badge.red, .red, .error) {
+  background: var(--red-surface);
+  color: var(--red);
+}
+
+:root[data-theme="dark"] :is(.error, .btn.danger-outline) {
+  border-color: #85564e;
+}
+
+:root[data-theme="dark"] .btn.danger-outline {
+  color: var(--red);
+}
+
+:root[data-theme="dark"] :is(.blue, .badge.blue) {
+  background: #26394c;
+  color: #b8d6f4;
+}
+
+:root[data-theme="dark"] :is(.lavender, .badge.lavender) {
+  background: #382e49;
+  color: #dcccfa;
+}
+
+:root[data-theme="dark"] .notice {
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .notice.amber {
+  background: var(--amber-surface);
+  color: var(--amber);
+}
+
+:root[data-theme="dark"] .warning-text { color: var(--amber) !important; }
+:root[data-theme="dark"] .positive { color: var(--green) !important; }
+:root[data-theme="dark"] .negative { color: var(--red) !important; }
+
+:root[data-theme="dark"] .auth-story {
+  background: #183125;
+}
+
+:root[data-theme="dark"] .modal-backdrop {
+  background: #070c09b3;
+}
+
+:root[data-theme="dark"] .printable-barcode {
+  background: white;
+  padding: 8px;
+  border-radius: 5px;
+}

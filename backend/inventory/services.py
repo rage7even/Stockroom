@@ -1,25 +1,34 @@
 from uuid import uuid4
 from django.db import transaction
-from django.db.models import Sum, Q
+from django.db.models import OuterRef, Q, Subquery, Sum
 from django.utils import timezone
-from rest_framework.exceptions import APIException, NotFound
-from .models import Product, Order, OrderItem, StockMovement
+from rest_framework.exceptions import APIException, NotFound, PermissionDenied
+from .models import Product, Order, OrderItem, StockMovement, StockReturn, Staff, Notification
 
 
 class Conflict(APIException):
     status_code = 409
 
 
-def inventory():
-    rows = Product.objects.annotate(
+def inventory(products=None):
+    defects = (
+        StockReturn.objects.filter(line__product_id=OuterRef("pk"), status="received")
+        .order_by()
+        .values("line__product_id")
+        .annotate(total=Sum("defective"))
+        .values("total")
+    )
+    rows = (Product.objects.all() if products is None else products).annotate(
         reserved=Sum(
             "order_items__qty_reserved",
             filter=Q(order_items__order__status__in=["confirmed", "packed"]),
-        )
+        ),
+        defective=Subquery(defects),
     ).order_by("product_name")
     return [
         dict(
             sku=p.sku,
+            barcode=p.barcode,
             product_name=p.product_name,
             brand=p.brand,
             category=p.category,
@@ -29,6 +38,7 @@ def inventory():
             location=p.location,
             reserved=p.reserved or 0,
             available=p.qty_in_stock - (p.reserved or 0),
+            defective=p.defective or 0,
         )
         for p in rows
     ]
@@ -55,10 +65,30 @@ def record(product, staff, kind, physical, reserved, note, order=None, source="s
         order=order,
         source=source,
     )
+    delta = physical - reserved
+    if delta < 0:
+        remaining = available(product)
+        if remaining < product.reorder_level <= remaining - delta:
+            notify_warehouse(
+                f"{product.product_name}: {remaining} available, minimum {product.reorder_level}.",
+                product=product,
+            )
+
+
+def notify_warehouse(message, **target):
+    recipients = Staff.objects.filter(is_active=True, role__in=["manager", "admin"])
+    Notification.objects.bulk_create([
+        Notification(recipient_id=pk, message=message, **target)
+        for pk in recipients.values_list("pk", flat=True)
+    ])
 
 
 @transaction.atomic
 def confirm(data, staff):
+    if staff.role == "tech_support" or (
+        staff.store_id and data["customer"].pk != staff.store_id
+    ):
+        raise PermissionDenied("You cannot place an order for this customer.")
     checked = []
     for line in data["lines"]:
         product = Product.objects.filter(pk=line["sku"]).first()

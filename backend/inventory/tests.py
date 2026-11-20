@@ -48,7 +48,7 @@ class StockroomTests(TestCase):
 
     def test_04_cancel_once(self):
         oid = self.order(2).data["order_id"]
-        self.assertEqual(self.client.post(f"/api/orders/{oid}/cancel").status_code, 200)
+        self.assertEqual(self.client.post(f"/api/orders/{oid}/cancel/").status_code, 200)
         self.assertEqual(self.available(), 4)
         self.assertEqual(self.client.post(f"/api/orders/{oid}/cancel").status_code, 409)
 
@@ -103,25 +103,34 @@ class StockroomTests(TestCase):
             403,
         )
 
-    def test_09_registration_and_csrf(self):
+    def test_09_staff_login_and_csrf(self):
         c = APIClient(enforce_csrf_checks=True)
-        body = {
-            "login": "new@example.com",
-            "password": "LongPassword123",
-            "full_name": "Test Person",
-            "role": "admin",
-        }
+        body = {"login": "sales@stockroom.local", "password": "Stockroom2026!"}
         self.assertEqual(
-            c.post("/api/auth/register", body, format="json").status_code, 403
+            c.post("/api/auth/login", body, format="json").status_code, 403
         )
         c.get("/api/auth/csrf")
         token = c.cookies["csrftoken"].value
-        r = c.post("/api/auth/register", body, format="json", HTTP_X_CSRFTOKEN=token)
-        self.assertEqual(r.status_code, 201)
+        registration = c.post(
+            "/api/auth/register",
+            {**body, "login": "new@example.com", "full_name": "Test Person"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(registration.status_code, 404)
+        self.assertIn("API endpoint not found", registration.json()["detail"])
+        self.assertFalse(Staff.objects.filter(username="new@example.com").exists())
+        r = c.post("/api/auth/login", body, format="json", HTTP_X_CSRFTOKEN=token)
+        self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data["role"], "sales")
         self.assertEqual(c.get("/api/auth/me").status_code, 200)
-        user = Staff.objects.get(username="new@example.com")
-        self.assertNotEqual(user.password, body["password"])
+        for suffix in ("", "/"):
+            with self.subTest(suffix=suffix):
+                products = c.get(f"/api/products{suffix}")
+                self.assertEqual(products.status_code, 200)
+                self.assertEqual(len(products.json()), 18)
+        admin = Staff.objects.get(username="admin@stockroom.local")
+        self.assertTrue(admin.check_password("Stockroom2026!"))
 
     def test_10_receiving_and_audit(self):
         r = self.client.post(

@@ -1,5 +1,5 @@
 ID,Area,Check,Actual,Status
-1,Registration,Create a new sales account,,NOT RUN
+1,Staff accounts,Verify that only an administrator can create a sales account,,NOT RUN
 2,Login,Incorrect password is rejected,,NOT RUN
 3,Products,Search HOC-U72-BLK and verify count,,NOT RUN
 4,Details,Open product and compare shelf/reserved/available,,NOT RUN

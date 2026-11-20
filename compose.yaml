@@ -1,0 +1,14 @@
+name: stockroom
+services:
+  stockroom:
+    build: .
+    restart: unless-stopped
+    environment:
+      STOCKROOM_EXTRA_HOSTS: "${STOCKROOM_EXTRA_HOSTS:-}"
+    ports:
+      - "${STOCKROOM_BIND:-127.0.0.1}:${STOCKROOM_PORT:-8001}:8000"
+    volumes:
+      - stockroom-data:/data
+
+volumes:
+  stockroom-data:

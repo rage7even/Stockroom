@@ -5,6 +5,13 @@ import { Orders } from "./orders";
 import { Receiving } from "./receiving";
 import { History } from "./history";
 import { Customers } from "./customers";
+import { Issues, Profile } from "./staff-tools";
+import { Cart } from "./cart";
+import { CatalogueImport } from "./catalogue-import";
+import { ReturnQueue } from "./return-queue";
+import { Suppliers } from "./suppliers";
+import { Purchases } from "./purchases";
+import { PurchaseReceiving } from "./purchase-receiving";
 export const routes: Routes = [
   { path: "", component: Dashboard },
   { path: "products", component: Products },
@@ -12,5 +19,13 @@ export const routes: Routes = [
   { path: "receiving", component: Receiving },
   { path: "history", component: History },
   { path: "customers", component: Customers },
+  { path: "profile", component: Profile },
+  { path: "issues", component: Issues },
+  { path: "cart", component: Cart },
+  { path: "data", component: CatalogueImport },
+  { path: "returns", component: ReturnQueue },
+  { path: "suppliers", component: Suppliers },
+  { path: "purchases", component: Purchases },
+  { path: "purchase-receiving", component: PurchaseReceiving },
   { path: "**", redirectTo: "" },
 ];

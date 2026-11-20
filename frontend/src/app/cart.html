@@ -1,0 +1,78 @@
+<div class="page-heading">
+  <div>
+    <h1>Cart</h1>
+    <p>Review quantities and prices before reserving stock.</p>
+  </div>
+  <a class="btn" routerLink="/products">Browse products</a>
+</div>
+@if(error()){
+  <div class="error workflow-error" role="alert">{{error()}}</div>
+  <button class="btn small workflow-reload" (click)="load()" [disabled]="busy()">Reload cart</button>
+}
+@if(!loaded()){
+  @if(busy()){<p role="status">Loading cart…</p>}
+} @else if(lines().length || dirty()){
+  <form (ngSubmit)="submit(true)" #orderForm="ngForm" class="workflow-stack">
+    <section class="panel">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>Price</th><th>Available</th><th>Quantity</th><th>Subtotal</th><th></th></tr></thead>
+          <tbody>
+            @for(row of rows(); track row.sku){
+              <tr>
+                <td><strong>{{row.product?.product_name || row.sku}}</strong><small class="mono">{{row.sku}}</small></td>
+                <td class="nowrap">{{row.product?.price_kzt | number}} ₸</td>
+                <td>
+                  @if(row.product){
+                    {{row.product.available}}
+                    @if((row.qty ?? 0) > row.product.available){<small class="badge amber">Insufficient stock</small>}
+                  } @else {<span class="badge red">Unavailable</span>}
+                </td>
+                <td><input class="cart-quantity" type="number" [attr.aria-label]="'Quantity for ' + row.sku"
+                  [name]="'quantity-' + row.sku" [ngModel]="row.qty" (ngModelChange)="edit(row.sku, $event)"
+                  min="1" max="100000" step="1" required [disabled]="busy()" /></td>
+                <td class="nowrap">{{(row.product?.price_kzt ?? 0) * (row.qty ?? 0) | number}} ₸</td>
+                <td><button type="button" class="btn small" [disabled]="busy()" (click)="remove(row.sku)"
+                  [attr.aria-label]="'Remove ' + row.sku">Remove</button></td>
+              </tr>
+            } @empty {
+              <tr><td colspan="6" class="empty">Save the empty cart to remove the last item.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer"><strong>Total {{total() | number}} ₸</strong></div>
+    </section>
+    <section class="panel workflow-form">
+      <h2>Order details</h2>
+      <div class="form-grid">
+        <label>Customer
+          <select name="customer" [(ngModel)]="customerId" (ngModelChange)="dirty.set(true)" required [disabled]="busy()">
+            <option [ngValue]="null">Select a customer</option>
+            @for(customer of s.customers(); track customer.customer_id){
+              <option [ngValue]="customer.customer_id">{{customer.shop_name}}</option>
+            }
+          </select>
+        </label>
+        <label>Channel
+          <select name="channel" [(ngModel)]="channel" (ngModelChange)="dirty.set(true)" [disabled]="busy()">
+            <option value="sales_manager">Phone / sales manager</option>
+            <option value="website">Website</option>
+          </select>
+        </label>
+      </div>
+      <label>Note<textarea name="note" [(ngModel)]="note" (ngModelChange)="dirty.set(true)" maxlength="500" [disabled]="busy()"></textarea></label>
+      <div class="button-group">
+        <button type="button" class="btn" (click)="submit(false)" [disabled]="busy() || !dirty() || !valid()">Save cart</button>
+        <button type="submit" class="btn primary" [disabled]="busy() || !orderForm.valid || !lines().length || !valid()">Confirm and reserve</button>
+      </div>
+    </section>
+  </form>
+} @else {
+  <section class="panel empty-state">
+    <sr-icon name="cart" />
+    <h2>Your cart is empty</h2>
+    <p>Add products from the catalogue.</p>
+    <a class="btn primary" routerLink="/products">Open catalogue</a>
+  </section>
+}

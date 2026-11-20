@@ -5,7 +5,11 @@
     <p>Your catalogue, live availability and the details behind every unit.</p>
   </div>
   <div class="button-group">
-    @if(s.warehouse()){<button class="btn primary" (click)="openEditor()">
+    <sr-barcode-scan (scanned)="scan($event)" />
+    @if(s.warehouse()){
+    <a class="btn" href="/api/catalog-csv" download>Export CSV</a>
+    <a class="btn" routerLink="/data">Import CSV</a>
+    <button class="btn primary" (click)="openEditor()">
       <sr-icon name="plus" />Add product</button
     >}
   </div>
@@ -68,6 +72,11 @@
         @for(p of filtered();track p.sku){
         <tr>
           <td>
+            <button class="icon-button" type="button" (click)="s.addToCart(p.sku)"
+              [disabled]="s.busy() || p.available === 0"
+              [attr.aria-label]="'Add ' + p.product_name + ' to cart'" title="Add to cart">
+              <sr-icon name="cart" />
+            </button>
             <button
               class="product-cell product-button"
               (click)="detail.set(p.sku)"
@@ -144,8 +153,17 @@
       <span>Available</span><strong>{{p.available}}</strong>
     </div>
   </div>
+  <div class="barcode-card">
+    <div class="printable-barcode">
+      <strong>{{p.product_name}}</strong>
+      <img [src]="labelImage()" alt="Code 128 barcode" />
+      <span class="mono">{{p.barcode}}</span>
+    </div>
+    <button type="button" class="btn" (click)="printLabel()">Print label</button>
+  </div>
   <div class="detail-meta">
     <div><span>Shelf location</span><strong>{{p.location}}</strong></div>
+    @if(s.warehouse()){<div><span>Defective returns</span><strong>{{p.defective}}</strong></div>}
     <div>
       <span>Reorder threshold</span><strong>{{p.reorder_level}} units</strong>
     </div>
@@ -171,6 +189,9 @@
   </div>
   }
   <div class="modal-actions">
+    <button class="btn" (click)="s.addToCart(p.sku)" [disabled]="s.busy() || p.available === 0">
+      <sr-icon name="cart" />Add to cart
+    </button>
     @if(s.warehouse()){<button
       class="btn primary"
       (click)="openEditor(p);detail.set('')"

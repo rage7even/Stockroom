@@ -4,8 +4,11 @@ Stockroom is our course project for a small warehouse that sells phone accessori
 
 - [User guide](docs/USER_GUIDE.md) for staff who work with products, orders, and deliveries.
 - [Developer guide](docs/DEVELOPER_GUIDE.md) for contributors who run, change, test, or recover the app.
+- [Windows and WSL quick start](docs/RUN_LOCAL.md) for the shared Python launcher and VS Code setup (in Russian).
 
 ## Run it on Windows
+
+If you downloaded the project ZIP with the compiled frontend, extract it, run `setup.bat` once, and then run `start.bat`. For a source checkout, build Angular first using the steps below.
 
 You need Git, Python 3.11 or newer, and Node.js 22.22.3 or later in the 22.x line (or 24.15.0 or later in the 24.x line). The setup also works with Python 3.11 from MSYS2 if `python` is on your PATH.
 
@@ -31,6 +34,12 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000). `setup.bat` creates a virtu
 
 The password for all three demo accounts is `Stockroom2026!`.
 
+### Add staff accounts
+
+The administrator creates accounts in [Django admin](http://127.0.0.1:8000/admin/). For a local demo, sign in with the Admin account from the table above.
+
+In Django admin, select **Staffs → Add**. Enter the employee's email in **Username** so they can use it to sign in to Stockroom, and choose the **Sales** or **Manager** role. Keep Django's staff and superuser flags for accounts that need to administer Django.
+
 ## Try an order
 
 1. Sign in as Manager and find `BAS-C65W-WHT` in **Products**. On a fresh database it has 10 units on the shelf, 6 reserved, and 4 available.
@@ -52,6 +61,10 @@ if (-not (Test-Path $stockroomPython)) { $stockroomPython = '.\.venv\bin\python.
 
 The [QA report](qa/TEST_REPORT.md) describes the automated checks. The [manual checklist](qa/manual_checks.csv) covers the browser flows.
 
+## Week 12 purchasing demo
+
+Sign in as Manager and open **Suppliers**, **Purchase orders** and **Purchase receiving**. The [user guide](docs/USER_GUIDE.md#buy-from-a-supplier) covers the complete flow. To add a sample supplier and a 10-unit purchase on a demo database, run `backend/manage.py seed_week12` using the same Python interpreter as the test command, after `seed` and `seed_week11`.
+
 ## Database backups
 
 The live database is `backend/stockroom.db`. When the server starts and once an hour while it runs, it checks whether a daily backup is due. It keeps up to 30 snapshots in `backend/backups`. Keep a copy on a separate drive if you need to recover after losing the computer. The live database and backups stay out of Git. The checked-in `database/demo.db` contains fictional data used by the HTTP checks.
@@ -62,4 +75,4 @@ To restore a snapshot, stop the server and close anything else using the databas
 & $stockroomPython integration\restore.py 'backend\backups\stockroom-EXAMPLE.db' --server-stopped
 ```
 
-The restore script validates the snapshot and saves a copy of the current database before replacing it. After restarting, sign in again.
+The restore script validates the snapshot and saves a copy of the current database before replacing it. Run `backend/manage.py migrate` with the same Python interpreter before restarting, then sign in again.

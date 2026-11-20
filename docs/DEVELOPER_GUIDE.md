@@ -86,6 +86,6 @@ This uses the same 24-hour rule. Check the timestamp of the newest file before t
 & $stockroomPython integration\restore.py 'E:\StockroomBackup\stockroom-EXAMPLE.db' --server-stopped
 ```
 
-4. Restart the app, sign in, and verify that the order, availability, and history match what you recorded. Note the snapshot time and how long recovery took.
+4. Run `& $stockroomPython backend\manage.py migrate` before restarting so the restored database receives any pending migrations. Sign in and verify that the order, availability, and history match what you recorded. Note the snapshot time and how long recovery took.
 
 The restore script checks database integrity, foreign keys, and expected tables. It writes to the default `backend/stockroom.db` beside this checkout, even if `STOCKROOM_DB` was used for a custom server path. It keeps a safety copy if the destination already exists and clears restored login sessions, so users sign in again.

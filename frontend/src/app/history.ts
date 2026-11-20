@@ -20,6 +20,8 @@ export class History {
     "sale",
     "correction",
     "write_off",
+    "store_return",
+    "purchase_receipt",
   ];
   filtered = computed(() =>
     this.s

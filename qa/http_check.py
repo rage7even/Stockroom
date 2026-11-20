@@ -17,6 +17,13 @@ root = Path(__file__).resolve().parents[1]
 with tempfile.TemporaryDirectory() as folder:
     db = Path(folder) / "check.db"
     shutil.copy2(root / "database/demo.db", db)
+    environment = {**os.environ, "STOCKROOM_DB": str(db)}
+    subprocess.run(
+        [sys.executable, str(root / "backend/manage.py"), "migrate", "--noinput"],
+        env=environment,
+        check=True,
+        stdout=subprocess.DEVNULL,
+    )
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
@@ -30,7 +37,7 @@ with tempfile.TemporaryDirectory() as folder:
             f"127.0.0.1:{port}",
             "--noreload",
         ],
-        env={**os.environ, "STOCKROOM_DB": str(db)},
+        env=environment,
         stdout=log,
         stderr=log,
     )
