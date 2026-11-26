@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { DatePipe, DecimalPipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -11,6 +12,9 @@ import { Store } from "./store";
   templateUrl: "./suppliers.html",
 })
 export class Suppliers {
+  readonly t = inject(Language).translate;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   rows = signal<Supplier[]>([]);
   selected = signal<number | null>(null);

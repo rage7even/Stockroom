@@ -10,6 +10,7 @@ import {
   inject,
 } from "@angular/core";
 import { Icon } from "./icon";
+import { Language } from "./language";
 @Component({
   selector: "sr-modal",
   standalone: true,
@@ -21,6 +22,7 @@ export class Modal implements AfterViewInit, OnDestroy {
   @Input() wide = false;
   @Output() closed = new EventEmitter<void>();
   el = inject(ElementRef);
+  readonly t = inject(Language).translate;
   previous = document.activeElement as HTMLElement | null;
   ngAfterViewInit() {
     setTimeout(() =>
@@ -31,6 +33,8 @@ export class Modal implements AfterViewInit, OnDestroy {
     this.previous?.focus();
   }
   @HostListener("document:keydown", ["$event"]) key(e: KeyboardEvent) {
+    const modals = document.querySelectorAll("sr-modal");
+    if (modals[modals.length - 1] !== this.el.nativeElement) return;
     if (e.key === "Escape") {
       this.closed.emit();
       return;

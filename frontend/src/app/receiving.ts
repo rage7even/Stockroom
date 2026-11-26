@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
@@ -9,6 +10,10 @@ import { Icon } from "./icon";
   templateUrl: "./receiving.html",
 })
 export class Receiving {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   mode = signal("receive");
   sku = "";

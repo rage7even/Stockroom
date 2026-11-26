@@ -1,0 +1,78 @@
+<div class="page-heading">
+  <div>
+    <h1>{{t('Messages')}}</h1>
+    @if(canPurchase() && s.staffChat()){
+      <div class="tab-strip" [attr.aria-label]="t('Chat type')">
+        <button type="button" [class.selected]="mode() === 'purchase'" [attr.aria-pressed]="mode() === 'purchase'" (click)="switchMode('purchase')">{{t('Purchase chat')}}</button>
+        <button type="button" [class.selected]="mode() === 'staff'" [attr.aria-pressed]="mode() === 'staff'" (click)="switchMode('staff')">{{t('Staff chat')}}</button>
+      </div>
+    }
+  </div>
+</div>
+@if(canPurchase() || s.staffChat()){
+  <div class="purchase-chat">
+    <section class="panel chat-pane">
+      <form class="chat-filters" (ngSubmit)="applyFilters()">
+        @if(mode() === 'purchase'){
+          <label>{{t('Supplier name')}}<input name="supplier" [(ngModel)]="supplier" maxlength="100" /></label>
+          <label>{{t('Purchase order number')}}<input name="purchase" [(ngModel)]="purchase" maxlength="20" placeholder="PO-1" /></label>
+        } @else {
+          <label>{{t('Employee name')}}<input name="employee" [(ngModel)]="employee" maxlength="100" /></label>
+        }
+        <div class="button-group">
+          <button class="btn" [disabled]="listBusy()">{{t('Apply filters')}}</button>
+          <button class="text-button" type="button" [disabled]="listBusy()" (click)="clearFilters()">{{t('Clear filters')}}</button>
+        </div>
+      </form>
+      @if(listError()){<div class="error" role="alert">{{message(listError())}}</div>}
+      <div class="chat-conversations">
+        @for(row of conversations(); track row.id){
+          <button type="button" [attr.aria-pressed]="current() === row.id" (click)="choose(row.id)">
+            <strong>{{row.label}}</strong><span>{{row.role ? t(row.detail) : row.detail}}</span>
+          </button>
+        } @empty {
+          <p class="subtle">{{t(listBusy() ? 'Loading…' : mode() === 'purchase' ? 'No matching purchase orders.' : 'No matching employees.')}}</p>
+        }
+      </div>
+    </section>
+    <section class="panel chat-pane">
+      @if(current(); as id){
+        <div class="chat-thread-heading">
+          <h2>{{threadTitle()}}</h2>
+          <button type="button" class="btn small" [disabled]="messagesBusy() || sending()" (click)="loadMessages('newer')">
+            {{t('Refresh messages')}}
+          </button>
+        </div>
+        @if(more()){
+          <button type="button" class="text-button" [disabled]="messagesBusy() || sending()" (click)="loadMessages('older')">
+            {{t('Load earlier messages')}}
+          </button>
+        }
+        <div class="chat-messages" role="log">
+          @for(row of messages(); track row.id){
+            <article [class.mine]="row.sender_id === s.user()?.staff_id">
+              <small><strong>{{row.sender}}</strong> · {{row.created_at  | date:'short':undefined:locale()}}</small>
+              <p>{{row.body}}</p>
+            </article>
+          } @empty {
+            <p class="subtle">{{t(messagesBusy() ? 'Loading…' : 'No messages yet.')}}</p>
+          }
+        </div>
+        @if(readError()){<div class="error" role="alert">{{message(readError())}}</div>}
+        @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
+        <form class="chat-composer" (ngSubmit)="send()">
+          <label>{{t('Message')}}
+            <textarea name="message" [(ngModel)]="draft" (ngModelChange)="error.set('')" maxlength="1500" rows="3" required></textarea>
+          </label>
+          <button class="btn primary" [disabled]="!draft.trim() || sending() || messagesBusy() || !!readError()">
+            {{t(sending() ? 'Sending…' : 'Send message')}}
+          </button>
+        </form>
+      } @else {
+        <p class="subtle">{{t(mode() === 'purchase' ? 'Choose a purchase order to open its chat.' : 'Choose a colleague to start a private chat.')}}</p>
+      }
+    </section>
+  </div>
+} @else {
+  <section class="panel empty-state"><h2>{{t('Chat access is unavailable.')}}</h2></section>
+}

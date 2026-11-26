@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
@@ -10,6 +11,9 @@ import { Icon } from "./icon";
   templateUrl: "./history.html",
 })
 export class History {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   query = signal("");
   type = signal("all");

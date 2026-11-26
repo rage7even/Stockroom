@@ -24,6 +24,8 @@ export class Store {
  stockRevision=signal(0);
  warehouse=computed(()=>['manager','admin'].includes(this.user()?.role||''));
  support=computed(()=>this.user()?.role === 'tech_support');
+ supplier=computed(()=>this.user()?.role === 'supplier');
+ staffChat=computed(()=>!!this.user() && !this.supplier() && !this.user()?.shop_id);
  lowStock=computed(()=>this.products().filter(p=>p.available<p.reorder_level));
  openOrders=computed(()=>this.orders().filter(o=>['confirmed','packed'].includes(o.status)));
  staleOrders=computed(()=>this.openOrders().filter(o=>o.stale));
@@ -51,7 +53,7 @@ export class Store {
   finally{this.ready.set(true);}
  }
  async refresh(){
-  if (this.support()) return;
+  if (this.support() || this.supplier()) return;
   this.products.set(await this.request<Product[]>('/products'));
   this.customers.set(await this.request<Customer[]>('/customers'));
   this.orders.set(await this.request<Order[]>('/orders'));

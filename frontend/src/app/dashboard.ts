@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, computed } from "@angular/core";
 import { DecimalPipe } from "@angular/common";
 import { RouterLink } from "@angular/router";
@@ -9,6 +10,9 @@ import { Icon } from "./icon";
   templateUrl: "./dashboard.html",
 })
 export class Dashboard {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   available = computed(() =>
     this.s.products().reduce((n, p) => n + p.available, 0),

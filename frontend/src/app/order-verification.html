@@ -1,0 +1,54 @@
+<section class="verification workflow-stack">
+  <h3>{{t('Verify order items')}}</h3>
+  @if(status() === 'confirmed' || status() === 'packed'){
+    <p class="subtle">{{t('Scan one unit at a time. Pack the order after all quantities match.')}}</p>
+  }
+  @if(snapshot(); as progress){
+    <div class="table-wrap"><table>
+      <thead><tr><th>{{t('Product')}}</th><th>{{t('Location')}}</th><th>{{t('Verified / needed')}}</th></tr></thead>
+      <tbody>
+        @for(line of progress.lines; track line.sku){
+          <tr>
+            <td><strong>{{line.product_name}}</strong><small>{{line.sku}}</small></td>
+            <td>{{line.location}}</td>
+            <td><span class="badge" [class.green]="line.verified === line.expected">{{line.verified}} / {{line.expected}}</span></td>
+          </tr>
+        }
+      </tbody>
+    </table></div>
+    <p role="status">{{t(progress.complete ? 'All items verified' : 'Verification incomplete')}}</p>
+    <div class="button-group">
+      @if(status() === 'confirmed' || status() === 'packed'){
+        @if(!progress.complete && !retry()){
+          <sr-barcode-scan [label]="t('Scan item')" [disabled]="busy() || s.busy()" (scanCompleted)="scan($event)" />
+        }
+        @if(retry()){
+          <button type="button" class="btn" [disabled]="busy() || s.busy()" (click)="retryScan()">{{t('Retry scan')}}</button>
+        }
+        @if(progress.latest_active_id; as scanId){
+          <button type="button" class="btn" [disabled]="busy() || s.busy() || !!retry()" (click)="undo(scanId)">{{t('Undo last scan')}}</button>
+        }
+      }
+      <button type="button" class="btn small" [disabled]="busy() || s.busy()" (click)="refresh()">{{t('Refresh verification')}}</button>
+    </div>
+    @if(progress.history.length){
+      <details>
+        <summary>{{t('Recent scans')}}</summary>
+        <ul class="scan-history">
+          @for(scan of progress.history; track scan.id){
+            <li>
+              <span class="mono">{{scan.barcode}}</span>
+              <span>{{scan.staff}} · {{t(sources[scan.source])}} · {{scan.created_at  | date:'short':undefined:locale()}}</span>
+              @if(scan.voided_at){<span>{{t('Undone by')}} {{scan.voided_by}} · {{scan.voided_at  | date:'short':undefined:locale()}}</span>}
+            </li>
+          }
+        </ul>
+      </details>
+    }
+  } @else if(busy()){
+    <p role="status">{{t('Loading…')}}</p>
+  } @else {
+    <button type="button" class="btn small" (click)="refresh()">{{t('Refresh verification')}}</button>
+  }
+  @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
+</section>

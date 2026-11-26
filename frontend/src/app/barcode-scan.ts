@@ -1,8 +1,14 @@
-import { Component, ElementRef, OnDestroy, input, output, signal, viewChild } from "@angular/core";
+import { afterNextRender, Component, ElementRef, inject, Injector, OnDestroy, input, output, signal, viewChild } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { readBarcodeRow } from "./code128";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
+import { Language } from "./language";
+
+export interface ScanResult {
+  barcode: string;
+  source: "camera" | "manual";
+}
 
 type Detector = { detect(video: HTMLVideoElement): Promise<{ rawValue: string }[]> };
 type DetectorConstructor = new (options: { formats: string[] }) => Detector;
@@ -11,23 +17,23 @@ type DetectorConstructor = new (options: { formats: string[] }) => Detector;
   selector: "sr-barcode-scan",
   imports: [FormsModule, Icon, Modal],
   template: `
-    <button class="btn" type="button" (click)="show()"><sr-icon name="scan" />{{label()}}</button>
+    <button class="btn" type="button" [disabled]="disabled()" (click)="show()"><sr-icon name="scan" />{{t(label())}}</button>
     @if(open()){
-      <sr-modal title="Scan barcode" (closed)="close()">
+      <sr-modal [title]="t('Scan barcode')" (closed)="close()">
         <div class="workflow-stack">
           <div class="scan-preview" [hidden]="!camera()">
-            <video #video muted playsinline aria-label="Barcode camera preview"></video>
+            <video #video muted playsinline [attr.aria-label]="t('Barcode camera preview')"></video>
             <span aria-hidden="true"></span>
           </div>
-          @if(camera()){<p>Hold the bars upright and fit the whole label inside the frame.</p>}
-          @if(message()){<p role="status">{{message()}}</p>}
+          @if(camera()){<p>{{t('Hold the bars upright. Move closer until the full barcode fills the guide and the bars look sharp.')}}</p>}
+          @if(message()){<p role="status">{{t(message())}}</p>}
           <form class="modal-form" (ngSubmit)="accept(code)">
-            <label>Barcode
+            <label>{{t('Barcode')}}
               <input name="barcode" [(ngModel)]="code" maxlength="27" autocomplete="off" autocapitalize="characters" />
             </label>
             <div class="button-group">
-              <button class="btn primary" type="submit" [disabled]="!code.trim()">Find product</button>
-              @if(!camera()){<button class="btn" type="button" (click)="start()">Open camera</button>}
+              <button class="btn primary" type="submit" [disabled]="!code.trim()">{{t('Find product')}}</button>
+              @if(!camera()){<button class="btn" type="button" (click)="start()">{{t('Open camera')}}</button>}
             </div>
           </form>
         </div>
@@ -37,12 +43,16 @@ type DetectorConstructor = new (options: { formats: string[] }) => Detector;
 })
 export class BarcodeScan implements OnDestroy {
   label = input("Scan barcode");
+  disabled = input(false);
+  readonly t = inject(Language).translate;
   scanned = output<string>();
+  scanCompleted = output<ScanResult>();
   video = viewChild<ElementRef<HTMLVideoElement>>("video");
   open = signal(false);
   camera = signal(false);
   message = signal("");
   code = "";
+  private readonly injector = inject(Injector);
   private stream?: MediaStream;
   private timer?: ReturnType<typeof setTimeout>;
   private request = 0;
@@ -50,7 +60,9 @@ export class BarcodeScan implements OnDestroy {
   show() {
     this.code = "";
     this.open.set(true);
-    void this.start();
+    afterNextRender(() => {
+      if (this.open() && !this.camera()) void this.start();
+    }, { injector: this.injector });
   }
 
   async start() {
@@ -60,10 +72,10 @@ export class BarcodeScan implements OnDestroy {
     }
     const request = ++this.request;
     this.camera.set(true);
-    this.message.set("Waiting for camera access…");
+    this.message.set("Opening the camera…");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } },
+        audio: false, video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 } },
       });
       if (request !== this.request || !this.video()) {
         stream.getTracks().forEach(track => track.stop());
@@ -105,7 +117,7 @@ export class BarcodeScan implements OnDestroy {
         if (!found && ctx) found = this.scanFrame(video, ctx);
       }
       if (request !== this.request) return;
-      if (found) this.accept(found);
+      if (found) this.accept(found, "camera");
       else this.timer = setTimeout(scan, 180);
     };
     void scan();
@@ -117,7 +129,7 @@ export class BarcodeScan implements OnDestroy {
     if (ctx.canvas.width !== width) ctx.canvas.width = width;
     if (ctx.canvas.height !== 1) ctx.canvas.height = 1;
     const gray = new Uint8Array(width);
-    for (const height of [0.5, 0.42, 0.58, 0.34, 0.66]) {
+    for (const height of [0.5, 0.45, 0.55, 0.38, 0.62, 0.31, 0.69]) {
       ctx.drawImage(video, 0, Math.floor(video.videoHeight * height), width, 1, 0, 0, width, 1);
       const pixels = ctx.getImageData(0, 0, width, 1).data;
       for (let x = 0; x < width; x++) {
@@ -129,11 +141,12 @@ export class BarcodeScan implements OnDestroy {
     return null;
   }
 
-  accept(value: string) {
+  accept(value: string, source: ScanResult["source"] = "manual") {
     const code = value.trim().toUpperCase();
     if (!code) return;
     this.close();
     this.scanned.emit(code);
+    this.scanCompleted.emit({ barcode: code, source });
   }
 
   close() {

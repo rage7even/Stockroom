@@ -14,7 +14,7 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "styles": ["src/styles.css", "src/dark-theme.css"],
-            "assets": []
+            "assets": ["src/assets/baseus-gan-65w-qr.png"]
           },
           "configurations": {
             "production": {

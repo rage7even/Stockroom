@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { DecimalPipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -11,6 +12,9 @@ import { CartData, Store } from "./store";
   templateUrl: "./cart.html",
 })
 export class Cart {
+  readonly message = inject(Language).message;
+  readonly t = inject(Language).translate;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   private router = inject(Router);
   private saved = signal<CartData | null>(null);
