@@ -1,7 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import Q, Value
-from django.db.models.functions import Concat
+from django.db.models.functions import Concat, Lower
+from django.utils import timezone
 
 
 class Staff(AbstractUser):
@@ -10,11 +11,14 @@ class Staff(AbstractUser):
         choices=[
             ("sales", "Sales"), ("manager", "Manager"), ("admin", "Admin"),
             ("tech_support", "Tech Support"),
+            ("supplier", "Supplier"),
         ],
         max_length=16,
         default="sales",
     )
     shop = models.ForeignKey("Customer", null=True, blank=True, on_delete=models.PROTECT)
+    recovery_email = models.EmailField(null=True, blank=True, verbose_name="verified recovery email")
+    supplier = models.ForeignKey("Supplier", null=True, blank=True, on_delete=models.PROTECT)
     phone = models.CharField(max_length=25, blank=True)
     job_title = models.CharField(max_length=80, blank=True)
     avatar = models.TextField(blank=True)
@@ -27,8 +31,14 @@ class Staff(AbstractUser):
         db_table = "staff"
         constraints = [
             models.CheckConstraint(
-                condition=Q(role__in=["sales", "manager", "admin", "tech_support"]), name="valid_role"
-            )
+                condition=Q(role__in=["sales", "manager", "admin", "tech_support", "supplier"]), name="valid_role"
+            ),
+            models.CheckConstraint(
+                condition=Q(role="supplier", supplier__isnull=False, shop__isnull=True, is_staff=False, is_superuser=False)
+                | (~Q(role="supplier") & Q(supplier__isnull=True)),
+                name="staff_supplier_role_binding",
+            ),
+            models.UniqueConstraint(Lower("recovery_email"), name="unique_staff_recovery_email"),
         ]
 
 
@@ -273,3 +283,66 @@ class Notification(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     read_at = models.DateTimeField(null=True)
+
+
+class OrderScan(models.Model):
+    id = models.UUIDField(primary_key=True)
+    line = models.ForeignKey(OrderItem, on_delete=models.PROTECT, related_name="scans")
+    staff = models.ForeignKey(Staff, on_delete=models.PROTECT)
+    barcode = models.CharField(max_length=27)
+    source = models.CharField(max_length=6, choices=[("camera", "Camera"), ("manual", "Manual"), ("demo", "Demo")])
+    created_at = models.DateTimeField(default=timezone.now)
+    voided_at = models.DateTimeField(null=True)
+    voided_by = models.ForeignKey(Staff, null=True, on_delete=models.PROTECT, related_name="voided_scans")
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["line", "voided_at", "created_at"], name="order_scan_line_active_idx"),
+        ]
+
+
+class PurchaseConversation(models.Model):
+    purchase = models.OneToOneField(PurchaseOrder, primary_key=True, on_delete=models.PROTECT, related_name="conversation")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PurchaseMessage(models.Model):
+    request_id = models.UUIDField(unique=True)
+    conversation = models.ForeignKey(PurchaseConversation, on_delete=models.PROTECT, related_name="messages")
+    sender = models.ForeignKey(Staff, on_delete=models.PROTECT)
+    body = models.CharField(max_length=1500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["conversation", "id"], name="purchase_message_thread_idx")]
+
+
+class PasswordResetChallenge(models.Model):
+    staff = models.OneToOneField(Staff, primary_key=True, on_delete=models.CASCADE)
+    token = models.UUIDField(unique=True)
+    digest = models.CharField(max_length=64)
+    issued_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True)
+
+
+class DirectConversation(models.Model):
+    first = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="direct_conversations_first")
+    second = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="direct_conversations_second")
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(condition=Q(first_id__lt=models.F("second_id")), name="direct_members_sorted"),
+            models.UniqueConstraint(fields=["first", "second"], name="direct_members_unique"),
+        ]
+
+
+class DirectMessage(models.Model):
+    request_id = models.UUIDField(unique=True)
+    conversation = models.ForeignKey(DirectConversation, on_delete=models.PROTECT, related_name="messages")
+    sender = models.ForeignKey(Staff, on_delete=models.PROTECT)
+    body = models.CharField(max_length=1500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["conversation", "id"], name="direct_message_thread_idx")]
