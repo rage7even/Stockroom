@@ -65,6 +65,10 @@ The [QA report](qa/TEST_REPORT.md) describes the automated checks. The [manual c
 
 Sign in as Manager and open **Suppliers**, **Purchase orders** and **Purchase receiving**. The [user guide](docs/USER_GUIDE.md#buy-from-a-supplier) covers the complete flow. To add a sample supplier and a 10-unit purchase on a demo database, run `backend/manage.py seed_week12` using the same Python interpreter as the test command, after `seed` and `seed_week11`.
 
+## Week 13 outbound verification, purchase chat and password recovery
+
+After applying the migrations, run `python backend/manage.py seed_week13` on the demo database to prepare the sample outbound order and supplier account. Open [Defence 4](docs/defence%204/README.md) for the demonstration, mail setup, team assignments, and test report.
+
 ## Database backups
 
 The live database is `backend/stockroom.db`. When the server starts and once an hour while it runs, it checks whether a daily backup is due. It keeps up to 30 snapshots in `backend/backups`. Keep a copy on a separate drive if you need to recover after losing the computer. The live database and backups stay out of Git. The checked-in `database/demo.db` contains fictional data used by the HTTP checks.
