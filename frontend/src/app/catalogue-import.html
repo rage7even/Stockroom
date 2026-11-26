@@ -1,46 +1,46 @@
 <div class="page-heading">
   <div>
-    <h1>Import &amp; export</h1>
-    <p>Add products or update catalogue details by SKU.</p>
+    <h1>{{t('Import & export')}}</h1>
+    <p>{{t('Add products or update catalogue details by SKU.')}}</p>
   </div>
   @if(s.warehouse()){
-    <a class="btn" href="/api/catalog-csv" download><sr-icon name="download" />Export CSV</a>
+    <a class="btn" href="/api/catalog-csv" download><sr-icon name="download" />{{t('Export CSV')}}</a>
   }
 </div>
 @if(s.warehouse()){
   <section class="panel workflow-form">
-    <h2>Import products</h2>
-    <p class="subtle">Use the exported CSV as a template. New products start with zero stock. Use Receiving to add units.</p>
-    <label>UTF-8 CSV file
+    <h2>{{t('Import products')}}</h2>
+    <p class="subtle">{{t('Use the exported CSV as a template. New products start with zero stock. Use Receiving to add units.')}}</p>
+    <label>{{t('UTF-8 CSV file')}}
       <input #upload type="file" accept=".csv,text/csv" [disabled]="busy()" (change)="pick(upload)" />
     </label>
-    <p class="field-help">Maximum 1 MB and 1,000 product rows.</p>
+    <p class="field-help">{{t('Maximum 1 MB and 1,000 product rows.')}}</p>
     <div class="button-group">
-      <button class="btn" (click)="run('preview')" [disabled]="!file() || busy()">Validate CSV</button>
-      <button class="btn primary" (click)="run('apply')" [disabled]="busy() || !summary() || summary()?.applied">Apply import</button>
+      <button class="btn" (click)="run('preview')" [disabled]="!file() || busy()">{{t('Validate CSV')}}</button>
+      <button class="btn primary" (click)="run('apply')" [disabled]="busy() || !summary() || summary()?.applied">{{t('Apply import')}}</button>
     </div>
-    @if(busy()){<p role="status">Checking catalogue…</p>}
-    @if(error()){<div class="error" role="alert">{{error()}}</div>}
+    @if(busy()){<p role="status">{{t('Checking catalogue…')}}</p>}
+    @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
     @if(rowErrors().length){
       <div class="error" role="alert">
-        <strong>Correct these rows and upload the file again.</strong>
+        <strong>{{t('Correct these rows and upload the file again.')}}</strong>
         <ul class="csv-errors">
           @for(item of rowErrors(); track item.row){
-            <li>Row {{item.row}} — {{item.message}}</li>
+            <li>{{t('Row {0} — {1}', item.row, message(item.message))}}</li>
           }
         </ul>
       </div>
     }
     @if(summary(); as result){
       <div class="workflow-result" role="status">
-        <strong>{{result.applied ? 'Import complete' : 'Preview ready'}}</strong>
-        <span>{{result.created}} new · {{result.updated}} updated · {{result.unchanged}} unchanged</span>
+        <strong>{{t(result.applied ? 'Import complete' : 'Preview ready')}}</strong>
+        <span>{{t('{0} new · {1} updated · {2} unchanged', result.created, result.updated, result.unchanged)}}</span>
       </div>
     }
   </section>
 } @else {
   <section class="panel empty-state">
-    <h2>Manager access required</h2>
-    <a class="btn" routerLink="/products">Back to products</a>
+    <h2>{{t('Manager access required')}}</h2>
+    <a class="btn" routerLink="/products">{{t('Back to products')}}</a>
   </section>
 }

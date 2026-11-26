@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
 import { Icon } from "./icon";
@@ -17,6 +18,8 @@ interface ImportSummary {
   templateUrl: "./catalogue-import.html",
 })
 export class CatalogueImport {
+  readonly message = inject(Language).message;
+  readonly t = inject(Language).translate;
   s = inject(Store);
   file = signal<File | null>(null);
   summary = signal<ImportSummary | null>(null);

@@ -1,6 +1,7 @@
 import csv
 from pathlib import Path
 from unittest.mock import patch
+from uuid import uuid4
 from django.core.management import call_command
 from django.db import IntegrityError, transaction, connections
 from django.test import TestCase, override_settings
@@ -54,9 +55,13 @@ class StockroomTests(TestCase):
 
     def test_05_pack_and_ship(self):
         oid = self.order(2).data["order_id"]
-        self.client.post(f"/api/orders/{oid}/pack")
+        for _ in range(2):
+            self.assertEqual(self.client.post(f"/api/orders/{oid}/verification", {
+                "barcode": "SR-BAS-C65W-WHT", "source": "manual", "request_id": str(uuid4()),
+            }, format="json").status_code, 201)
+        self.assertEqual(self.client.post(f"/api/orders/{oid}/pack").status_code, 200)
         self.assertEqual(self.available(), 2)
-        self.client.post(f"/api/orders/{oid}/ship")
+        self.assertEqual(self.client.post(f"/api/orders/{oid}/ship").status_code, 200)
         self.assertEqual(self.available(), 2)
         self.assertEqual(Product.objects.get(pk="BAS-C65W-WHT").qty_in_stock, 8)
         self.assertEqual(self.client.post(f"/api/orders/{oid}/ship").status_code, 409)

@@ -1,6 +1,6 @@
 from uuid import uuid4
 from django.db import transaction
-from django.db.models import OuterRef, Q, Subquery, Sum
+from django.db.models import Count, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 from rest_framework.exceptions import APIException, NotFound, PermissionDenied
 from .models import Product, Order, OrderItem, StockMovement, StockReturn, Staff, Notification
@@ -118,9 +118,13 @@ def confirm(data, staff):
     return order
 
 
+def verified_lines(order):
+    return order.lines.annotate(verified=Count("scans", filter=Q(scans__voided_at__isnull=True)))
+
+
 @transaction.atomic
 def transition(oid, action, staff):
-    order = Order.objects.filter(pk=oid).first()
+    order = Order.objects.select_for_update().filter(pk=oid).first()
     if order is None:
         raise NotFound("Order not found")
     if action not in ["pack", "ship", "cancel"]:
@@ -131,6 +135,12 @@ def transition(oid, action, staff):
         and order.status != "confirmed"
     ):
         raise Conflict("This order has already moved past this step.")
+    if action == "ship" and order.status != "packed":
+        raise Conflict("Pack the order before shipping.")
+    if action in ["pack", "ship"]:
+        quantities = list(verified_lines(order).values_list("verified", "qty_reserved"))
+        if not quantities or any(verified != expected for verified, expected in quantities):
+            raise Conflict("Verify all order items first.")
     for line in order.lines.select_related("product"):
         if action == "pack":
             continue

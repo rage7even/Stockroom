@@ -6,9 +6,9 @@ from .models import Staff
 @admin.register(Staff)
 class StaffAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (
-        ("Stockroom", {"fields": ("full_name", "role", "shop")}),
+        ("Stockroom", {"fields": ("full_name", "role", "shop", "supplier", "recovery_email")}),
     )
     add_fieldsets = UserAdmin.add_fieldsets + (
-        ("Stockroom", {"fields": ("full_name", "email", "role", "shop")}),
+        ("Stockroom", {"fields": ("full_name", "email", "role", "shop", "supplier", "recovery_email")}),
     )
     list_display = ["username", "full_name", "role", "is_active"]

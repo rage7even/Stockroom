@@ -12,6 +12,7 @@ import { ReturnQueue } from "./return-queue";
 import { Suppliers } from "./suppliers";
 import { Purchases } from "./purchases";
 import { PurchaseReceiving } from "./purchase-receiving";
+import { PurchaseChat } from "./purchase-chat";
 export const routes: Routes = [
   { path: "", component: Dashboard },
   { path: "products", component: Products },
@@ -26,6 +27,7 @@ export const routes: Routes = [
   { path: "returns", component: ReturnQueue },
   { path: "suppliers", component: Suppliers },
   { path: "purchases", component: Purchases },
+  { path: "chat", component: PurchaseChat },
   { path: "purchase-receiving", component: PurchaseReceiving },
   { path: "**", redirectTo: "" },
 ];

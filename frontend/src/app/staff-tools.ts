@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
@@ -6,24 +7,26 @@ import { Store, User } from "./store";
 @Component({
   imports: [FormsModule],
   template: `
-    <div class="page-heading"><div><h1>Profile</h1><p>{{s.user()?.login}} · {{s.user()?.role}}</p></div></div>
+    <div class="page-heading"><div><h1>{{t('Profile')}}</h1><p>{{s.user()?.login}} · {{label(s.user()?.role)}}</p></div></div>
     <section class="panel">
       <form class="modal-form toolbar" (ngSubmit)="save()" #form="ngForm">
         @if (preview() || (s.user()?.avatar && !removePhoto)) {
-          <img class="profile-photo" [src]="preview() || s.user()?.avatar" alt="Profile photo" />
-          <button class="btn" type="button" (click)="clearPhoto(photo)">Remove photo</button>
+          <img class="profile-photo" [src]="preview() || s.user()?.avatar" [alt]="t('Profile photo')" />
+          <button class="btn" type="button" (click)="clearPhoto(photo)">{{t('Remove photo')}}</button>
         }
-        <label>Photo<input #photo type="file" accept="image/jpeg,image/png,image/webp"
+        <label>{{t('Photo')}}<input #photo type="file" accept="image/jpeg,image/png,image/webp"
           [disabled]="saving()" (change)="choosePhoto(photo)" /></label>
-        <label>Full name<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
-        <label>Phone<input name="phone" type="tel" [(ngModel)]="phone" maxlength="25" /></label>
-        <label>Job title<input name="jobTitle" [(ngModel)]="jobTitle" maxlength="80" /></label>
-        <button class="btn primary" [disabled]="!form.valid || saving()">Save profile</button>
+        <label>{{t('Full name')}}<input name="name" [(ngModel)]="name" required maxlength="80" /></label>
+        <label>{{t('Phone')}}<input name="phone" type="tel" [(ngModel)]="phone" maxlength="25" /></label>
+        <label>{{t('Job title')}}<input name="jobTitle" [(ngModel)]="jobTitle" maxlength="80" /></label>
+        <button class="btn primary" [disabled]="!form.valid || saving()">{{t('Save profile')}}</button>
       </form>
     </section>
   `,
 })
 export class Profile {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
   s = inject(Store);
   name = this.s.user()?.full_name ?? "";
   phone = this.s.user()?.phone ?? "";
@@ -99,52 +102,56 @@ interface Issue {
 @Component({
   imports: [FormsModule, DatePipe],
   template: `
-    <div class="page-heading"><div><h1>Report issue</h1></div></div>
+    <div class="page-heading"><div><h1>{{t('Report issue')}}</h1></div></div>
     <section class="panel">
       <form class="modal-form toolbar" (ngSubmit)="submit(attachment)" #form="ngForm">
-        <label>Title<input name="title" [(ngModel)]="title" maxlength="120" required /></label>
-        <label>Description<textarea name="description" [(ngModel)]="description" rows="3"
-          maxlength="2000" placeholder="Page, steps, expected and actual result" required></textarea></label>
-        <label>Photo or screenshot (optional)
+        <label>{{t('Title')}}<input name="title" [(ngModel)]="title" maxlength="120" required /></label>
+        <label>{{t('Description')}}<textarea name="description" [(ngModel)]="description" rows="3"
+          maxlength="2000" [placeholder]="t('Page, steps, expected and actual result')" required></textarea></label>
+        <label>{{t('Photo or screenshot (optional)')}}
           <input #attachment type="file" accept="image/jpeg,image/png,image/webp"
             [disabled]="saving()" (change)="attachmentError.set('')" />
-          <small>JPEG, PNG or WebP · up to 5 MB</small>
-          @if (attachmentError()) { <small role="alert">{{attachmentError()}}</small> }
+          <small>{{t('JPEG, PNG or WebP · up to 5 MB')}}</small>
+          @if (attachmentError()) { <small role="alert">{{message(attachmentError())}}</small> }
         </label>
-        <button class="btn primary" [disabled]="!form.valid || saving()">Send issue</button>
+        <button class="btn primary" [disabled]="!form.valid || saving()">{{t('Send issue')}}</button>
       </form>
     </section>
     <section class="panel">
-      <div class="toolbar"><h2>{{canManage() ? "Issue queue" : "My issues"}}</h2></div>
+      <div class="toolbar"><h2>{{t(canManage() ? "Issue queue" : "My issues")}}</h2></div>
       @for (issue of items(); track issue.id) {
         <div class="toolbar">
           <div>
             <strong>#{{issue.id}} · {{issue.title}}</strong>
             <p>{{issue.description}}</p>
-            <small>{{issue.author}} · {{issue.created_at | date:"short"}}</small>
+            <small>{{issue.author}} · {{issue.created_at  | date:"short":undefined:locale()}}</small>
             @if (issue.attachment_url; as attachmentUrl) {
               <p><a class="btn small" [href]="attachmentUrl" target="_blank"
-                rel="noopener noreferrer">Open attachment</a></p>
+                rel="noopener noreferrer">{{t('Open attachment')}}</a></p>
             }
           </div>
           @if (canManage()) {
-            <select [attr.aria-label]="'Status for issue '+issue.id" [ngModel]="issue.status"
+            <select [attr.aria-label]="t('Status for issue {0}', issue.id)" [ngModel]="issue.status"
               [disabled]="saving()" (ngModelChange)="changeStatus(issue, $event)">
-              <option value="open">Open</option>
-              <option value="in_progress">In progress</option>
-              <option value="resolved">Resolved</option>
+              <option value="open">{{t('Open')}}</option>
+              <option value="in_progress">{{t('In progress')}}</option>
+              <option value="resolved">{{t('Resolved')}}</option>
             </select>
           } @else {
-            <span class="badge blue">{{issue.status.replace("_", " ")}}</span>
+            <span class="badge blue">{{label(issue.status)}}</span>
           }
         </div>
       } @empty {
-        <div class="toolbar">No issues yet.</div>
+        <div class="toolbar">{{t('No issues yet.')}}</div>
       }
     </section>
   `,
 })
 export class Issues {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   items = signal<Issue[]>([]);
   canManage = signal(false);

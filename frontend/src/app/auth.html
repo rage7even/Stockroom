@@ -7,83 +7,113 @@
       ></a
     >
     <div class="story-content">
-      <span class="eyebrow light">LESS GUESSWORK. MORE CONTROL.</span>
-      <h1>Every unit.<br />Every order.<br /><span>In sync.</span></h1>
+      <span class="eyebrow light">{{t('LESS GUESSWORK. MORE CONTROL.')}}</span>
+      <h1>{{t('Every unit.')}}<br />{{t('Every order.')}}<br /><span>{{t('In sync.')}}</span></h1>
       <p>
-        One clear picture of your warehouse.<br />From the receiving table to
-        the next delivery.
+        {{t('One clear picture of your warehouse.')}}<br />{{t('From the receiving table to the next delivery.')}}
       </p>
       <div class="story-card">
         <div class="story-check"><sr-icon name="check" /></div>
         <div>
-          <strong>Promise only what you can deliver.</strong>
-          <p>Live availability across website and phone orders.</p>
+          <strong>{{t('Promise only what you can deliver.')}}</strong>
+          <p>{{t('Live availability across website and phone orders.')}}</p>
         </div>
       </div>
     </div>
     <div class="story-footer">
-      <span>STOCKROOM / ALMATY</span><span>Built for small teams.</span>
+      <span>{{t('STOCKROOM / ALMATY')}}</span><span>{{t('Built for small teams.')}}</span>
     </div>
   </section>
   <section class="auth-form">
-    <sr-theme-toggle class="auth-theme-toggle" />
+    <div class="auth-preferences"><sr-language-select /><sr-theme-toggle /></div>
     <div class="auth-form-inner">
-      <span class="eyebrow">YOUR WAREHOUSE, CONNECTED</span>
-      <h2>Welcome back</h2>
-      <p class="subtle">Sign in with the account provided by your administrator.</p>
-      <form (ngSubmit)="submit()" #form="ngForm">
-        <label
-          >Email address<input
-            type="email"
-            name="login"
-            [(ngModel)]="login"
-            required
-            maxlength="150"
-            autocomplete="username"
-            placeholder="you@company.com"
-        /></label>
-        <label
-          >Password
-          <div class="password-field">
-            <input
-              [type]="showPassword()?'text':'password'"
-              name="password"
-              [(ngModel)]="password"
-              required
-              maxlength="128"
-              autocomplete="current-password"
-              placeholder="Enter your password"
-            /><button type="button" (click)="showPassword.set(!showPassword())">
-              {{showPassword()?'Hide':'Show'}}
+      @if(mode() === 'login'){
+        <h2>{{t('Welcome back')}}</h2>
+        <p class="subtle">{{t('Sign in with the account provided by your administrator.')}}</p>
+        <form (ngSubmit)="submit()" #form="ngForm">
+          <label>{{t('Email address')}}
+            <input type="email" name="login" [(ngModel)]="login" required email
+              maxlength="150" autocomplete="username" placeholder="you@company.com" />
+          </label>
+          <label>{{t('Password')}}
+            <div class="password-field">
+              <input [type]="showPassword() ? 'text' : 'password'" name="password"
+                [(ngModel)]="password" required maxlength="128" autocomplete="current-password"
+                [placeholder]="t('Enter your password')" />
+              <button type="button" (click)="showPassword.set(!showPassword())">
+                {{t(showPassword() ? 'Hide' : 'Show')}}
+              </button>
+            </div>
+          </label>
+          <button type="button" class="text-button" [disabled]="busy()" (click)="setMode('request')">
+            {{t('Forgot password?')}}
+          </button>
+          <button class="btn primary auth-submit" [disabled]="!form.valid || busy()">
+            {{t(busy() ? 'Connecting…' : 'Sign in')}}<sr-icon name="arrow" />
+          </button>
+        </form>
+      } @else {
+        <h2>{{t('Reset your password')}}</h2>
+        @if(mode() === 'request'){
+          <p class="subtle">{{t('Enter the verified email linked to your account.')}}</p>
+          <form (ngSubmit)="requestCode()" #requestForm="ngForm">
+            <label>{{t('Email address')}}
+              <input type="email" name="email" required email maxlength="254"
+                autocomplete="email" [(ngModel)]="email" />
+            </label>
+            <button class="btn primary auth-submit" [disabled]="!requestForm.valid || busy()">
+              {{t(busy() ? 'Sending…' : 'Send code')}}
             </button>
-          </div></label
-        >
-        @if(error()){
-        <div class="error" role="alert">{{error()}}</div>
+          </form>
+        } @else {
+          <p class="subtle">{{email}}</p>
+          <form (ngSubmit)="resetPassword()" #confirmForm="ngForm">
+            <label>{{t('Reset code')}}
+              <input name="code" [(ngModel)]="code" required pattern="[0-9]{8}"
+                maxlength="8" inputmode="numeric" autocomplete="one-time-code" />
+            </label>
+            <label>{{t('New password')}}
+              <input type="password" name="newPassword" [(ngModel)]="newPassword"
+                required minlength="10" maxlength="128" autocomplete="new-password" />
+            </label>
+            <label>{{t('Confirm new password')}}
+              <input type="password" name="confirmation" [(ngModel)]="confirmation"
+                required maxlength="128" autocomplete="new-password" />
+            </label>
+            <button class="btn primary auth-submit" [disabled]="!confirmForm.valid || busy()">
+              {{t(busy() ? 'Saving…' : 'Save new password')}}
+            </button>
+            <div class="button-group">
+              <button type="button" class="text-button" [disabled]="busy() || !!resendUntil()" (click)="requestCode()">
+                {{t('Resend code')}}
+              </button>
+              <button type="button" class="text-button" [disabled]="busy()" (click)="setMode('request')">
+                {{t('Change email')}}
+              </button>
+            </div>
+          </form>
         }
-        <button
-          class="btn primary auth-submit"
-          [disabled]="!form.valid||busy()"
-        >
-          {{busy()?'Connecting…':'Sign in'}}<sr-icon
-            name="arrow"
-          />
+        <button type="button" class="text-button" [disabled]="busy()" (click)="setMode('login')">
+          {{t('Back to sign in')}}
         </button>
-      </form>
-      <div class="demo-box">
-        <div><sr-icon name="shield" /><strong>Explore the demo</strong></div>
-        <p>Fictional products and orders, ready for your presentation.</p>
-        <div class="demo-roles">
-          @for(role of ['manager','sales','shop','support','admin'];track role){<button
-            type="button"
-            (click)="demo(role)"
-          >
-            {{role === 'support' ? 'Tech Support' : role === 'shop' ? 'Shop (Sales)' : role}}</button
-          >}
+      }
+      @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
+      @if(notice()){<div class="notice" role="status">{{t(notice())}}</div>}
+      @if(mode() === 'login'){
+        <div class="demo-box">
+          <div><sr-icon name="shield" /><strong>{{t('Explore the demo')}}</strong></div>
+          <p>{{t('Fictional products and orders, ready for your presentation.')}}</p>
+          <div class="demo-roles">
+            @for(role of ['manager','sales','shop','support','admin']; track role){
+              <button type="button" (click)="demo(role)">
+                {{role === 'support' ? t('Tech Support') : role === 'shop' ? t('Shop (Sales)') : label(role)}}
+              </button>
+            }
+          </div>
+          <small>{{t('Password')}} · Stockroom2026!</small>
         </div>
-        <small>Password: Stockroom2026!</small>
-      </div>
+      }
     </div>
-    <p class="auth-bottom">Inventory, in sync. <span>Stockroom v1.0</span></p>
+    <p class="auth-bottom">{{t('Inventory, in sync.')}} <span>Stockroom v1.0</span></p>
   </section>
 </main>

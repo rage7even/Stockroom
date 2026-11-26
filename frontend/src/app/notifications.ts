@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { DatePipe } from "@angular/common";
 import { Component, DestroyRef, HostListener, effect, inject, signal } from "@angular/core";
 import { Router } from "@angular/router";
@@ -18,28 +19,31 @@ interface StockNotification {
   imports: [DatePipe, Icon],
   template: `
     <button class="icon-button notification-button" type="button" [attr.aria-expanded]="open()"
-      aria-controls="notification-list" (click)="toggle()" title="Notifications"
-      [attr.aria-label]="'Notifications, ' + unread() + ' unread'">
+      aria-controls="notification-list" (click)="toggle()" [title]="t('Notifications')"
+      [attr.aria-label]="t('Notifications, {0} unread', unread())">
       <sr-icon name="bell" />
       @if(unread()){<span>{{unread()}}</span>}
     </button>
     @if(open()){
-      <section class="notification-menu" id="notification-list" aria-label="Notifications">
+      <section class="notification-menu" id="notification-list" [attr.aria-label]="t('Notifications')">
         <div class="notification-heading">
-          <h2>Notifications</h2>
-          <button class="icon-button" type="button" aria-label="Close notifications" (click)="open.set(false)"><sr-icon name="close" /></button>
+          <h2>{{t('Notifications')}}</h2>
+          <button class="icon-button" type="button" [attr.aria-label]="t('Close notifications')" (click)="open.set(false)"><sr-icon name="close" /></button>
         </div>
-        @if(error()){<p role="alert">{{error()}}</p>}
+        @if(error()){<p role="alert">{{message(error())}}</p>}
         @for(item of rows(); track item.id){
           <button class="notification-item" [class.unread]="!item.read" type="button" (click)="select(item)">
-            <span>{{item.message}}</span><small>{{item.created_at | date:'dd MMM, HH:mm'}}{{item.read ? '' : ' · Unread'}}</small>
+            <span>{{message(item.message)}}</span><small>{{item.created_at  | date:'dd MMM, HH:mm':undefined:locale()}}{{item.read ? '' : ' · ' + t('Unread')}}</small>
           </button>
-        } @empty {<p>No notifications yet.</p>}
+        } @empty {<p>{{t('No notifications yet.')}}</p>}
       </section>
     }
   `,
 })
 export class Notifications {
+  readonly t = inject(Language).translate;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   private store = inject(Store);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);

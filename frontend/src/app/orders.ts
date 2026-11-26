@@ -6,6 +6,8 @@ import { Store, Order } from "./store";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
 import { newRequestId } from "./request-id";
+import { Language } from "./language";
+import { OrderVerification } from "./order-verification";
 
 interface Draft {
   id: string;
@@ -29,11 +31,16 @@ interface ReturnRecord {
 
 @Component({
   standalone: true,
-  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal, RouterLink],
+  imports: [FormsModule, DecimalPipe, DatePipe, Icon, Modal, RouterLink, OrderVerification],
   templateUrl: "./orders.html",
 })
 export class Orders {
+  readonly label = inject(Language).label;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
+  readonly t = inject(Language).translate;
+  readonly verified = signal(false);
   route = inject(ActivatedRoute);
   query = signal("");
   status = signal("all");
@@ -91,6 +98,9 @@ export class Orders {
         untracked(() => this.openOrder(order));
       }
     });
+  }
+  statusLabel(status: string) {
+    return this.tabs.find(tab => tab.value === status)?.name ?? status;
   }
   count(status: string) {
     return this.s
@@ -189,6 +199,8 @@ export class Orders {
     }
   }
   openOrder(order: Order) {
+    this.verified.set(false);
+    this.pending.set("");
     this.detail.set(order.order_id);
     this.s.error.set("");
     this.returnRecords.set([]);
@@ -224,6 +236,13 @@ export class Orders {
     const path = "/returns/" + order.order_id + "/" + item.id + "/review";
     if (await this.s.mutate(path, { status }, status === "received" ? "Return received" : "Return rejected")) {
       await this.loadReturns(order.order_id);
+    }
+  }
+  verificationChanged(order: Order, result: { complete: boolean; status: string }) {
+    this.verified.set(result.complete);
+    if (order.status !== result.status) {
+      this.pending.set("");
+      this.s.orders.update(rows => rows.map(row => row.order_id === order.order_id ? { ...row, status: result.status } : row));
     }
   }
   async transition(o: Order) {

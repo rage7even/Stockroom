@@ -1,85 +1,85 @@
 <div class="page-heading">
-  <div><h1>Suppliers</h1><p>Agreements, lead times and supplier catalogues.</p></div>
-  @if(s.warehouse()){<button class="btn primary" (click)="openSupplier()">Add supplier</button>}
+  <div><h1>{{t('Suppliers')}}</h1><p>{{t('Agreements, lead times and supplier catalogues.')}}</p></div>
+  @if(s.warehouse()){<button class="btn primary" (click)="openSupplier()">{{t('Add supplier')}}</button>}
 </div>
 @if(s.warehouse()){
-  @if(error() && !supplierForm() && !offerForm()){<div class="error" role="alert">{{error()}}</div>}
+  @if(error() && !supplierForm() && !offerForm()){<div class="error" role="alert">{{message(error())}}</div>}
   @if(loading()){
-    <p role="status">Loading suppliers…</p>
+    <p role="status">{{t('Loading suppliers…')}}</p>
   } @else if(supplier(); as row){
     <div class="workflow-stack">
       <section class="panel workflow-form">
-        <label>Supplier
+        <label>{{t('Supplier')}}
           <select [ngModel]="selected()" (ngModelChange)="selected.set($event)">
             @for(item of rows(); track item.id){<option [ngValue]="item.id">{{item.name}}</option>}
           </select>
         </label>
         <div class="detail-meta">
-          <div><span>Location</span><strong>{{row.location}}</strong></div>
-          <div><span>Lead time</span><strong>{{row.lead_days}} days</strong></div>
-          <div><span>Agreement</span><strong>{{row.agreement_active ? 'Active' : 'Inactive'}}</strong></div>
+          <div><span>{{t('Location')}}</span><strong>{{row.location}}</strong></div>
+          <div><span>{{t('Lead time')}}</span><strong>{{t('{0} days', row.lead_days)}}</strong></div>
+          <div><span>{{t('Agreement')}}</span><strong>{{t(row.agreement_active ? 'Active' : 'Inactive')}}</strong></div>
         </div>
         @if(row.agreement){<p>{{row.agreement}}</p>}
         <div class="button-group">
-          <button class="btn" (click)="openSupplier(row)">Edit supplier</button>
+          <button class="btn" (click)="openSupplier(row)">{{t('Edit supplier')}}</button>
           @if(row.agreement_active && row.offers.length){
-            <a class="btn primary" routerLink="/purchases" [queryParams]="{ supplier: row.id }">Create purchase order</a>
+            <a class="btn primary" routerLink="/purchases" [queryParams]="{ supplier: row.id }">{{t('Create purchase order')}}</a>
           }
         </div>
       </section>
       <section class="panel">
-        <div class="panel-heading"><h2>Supplier catalogue</h2><button class="btn small" (click)="openOffer()">Add offer</button></div>
+        <div class="panel-heading"><h2>{{t('Supplier catalogue')}}</h2><button class="btn small" (click)="openOffer()">{{t('Add offer')}}</button></div>
         <div class="table-wrap"><table>
-          <thead><tr><th>Product</th><th>Purchase cost</th><th>Supplier stock</th><th>Updated</th><th></th></tr></thead>
+          <thead><tr><th>{{t('Product')}}</th><th>{{t('Purchase cost')}}</th><th>{{t('Supplier stock')}}</th><th>{{t('Updated')}}</th><th></th></tr></thead>
           <tbody>
             @for(offer of row.offers; track offer.sku){
               <tr>
                 <td><strong>{{offer.product_name}}</strong><small>{{offer.sku}}</small></td>
-                <td>{{offer.unit_cost | number}} ₸</td>
-                <td>{{offer.available_qty === null ? 'Unknown' : offer.available_qty === 0 ? 'Out of stock' : offer.available_qty}}</td>
-                <td>{{offer.updated_at | date:'dd MMM, HH:mm'}}</td>
-                <td><button class="btn small" (click)="openOffer(offer)">Edit</button></td>
+                <td>{{offer.unit_cost  | number:undefined:locale()}} ₸</td>
+                <td>{{offer.available_qty === null ? t('Unknown') : offer.available_qty === 0 ? t('Out of stock') : offer.available_qty}}</td>
+                <td>{{offer.updated_at  | date:'dd MMM, HH:mm':undefined:locale()}}</td>
+                <td><button class="btn small" (click)="openOffer(offer)">{{t('Edit')}}</button></td>
               </tr>
-            } @empty {<tr><td colspan="5" class="empty">No offers have been added.</td></tr>}
+            } @empty {<tr><td colspan="5" class="empty">{{t('No offers have been added.')}}</td></tr>}
           </tbody>
         </table></div>
       </section>
     </div>
   } @else {
-    <section class="panel empty-state"><h2>No suppliers yet</h2><p>Add the manufacturer you buy from.</p></section>
+    <section class="panel empty-state"><h2>{{t('No suppliers yet')}}</h2><p>{{t('Add the manufacturer you buy from.')}}</p></section>
   }
-} @else {<section class="panel empty-state"><h2>Manager access required</h2></section>}
+} @else {<section class="panel empty-state"><h2>{{t('Manager access required')}}</h2></section>}
 
 @if(supplierForm(); as form){
-  <sr-modal [title]="editingId ? 'Edit supplier' : 'Add supplier'" (closed)="supplierForm.set(null)">
+  <sr-modal [title]="t(editingId ? 'Edit supplier' : 'Add supplier')" (closed)="supplierForm.set(null)">
     <form class="modal-form" #editor="ngForm" (ngSubmit)="saveSupplier(form)">
-      <label>Name<input name="name" [(ngModel)]="form.name" maxlength="100" required /></label>
+      <label>{{t('Name')}}<input name="name" [(ngModel)]="form.name" maxlength="100" required /></label>
       <div class="form-grid">
-        <label>Location<input name="location" [(ngModel)]="form.location" maxlength="150" required /></label>
-        <label>Lead time in days<input name="lead" type="number" [(ngModel)]="form.lead_days" min="0" max="365" required /></label>
+        <label>{{t('Location')}}<input name="location" [(ngModel)]="form.location" maxlength="150" required /></label>
+        <label>{{t('Lead time in days')}}<input name="lead" type="number" [(ngModel)]="form.lead_days" min="0" max="365" required /></label>
       </div>
-      <label>Agreement terms<textarea name="agreement" [(ngModel)]="form.agreement" maxlength="300"></textarea></label>
-      <label class="purchase-checkbox"><input type="checkbox" name="active" [(ngModel)]="form.agreement_active" /> Active agreement</label>
-      @if(error()){<div class="error" role="alert">{{error()}}</div>}
-      <div class="button-group"><button class="btn primary" [disabled]="editor.invalid || saving()">Save supplier</button></div>
+      <label>{{t('Agreement terms')}}<textarea name="agreement" [(ngModel)]="form.agreement" maxlength="300"></textarea></label>
+      <label class="purchase-checkbox"><input type="checkbox" name="active" [(ngModel)]="form.agreement_active" /> {{t('Active agreement')}}</label>
+      @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
+      <div class="button-group"><button class="btn primary" [disabled]="editor.invalid || saving()">{{t('Save supplier')}}</button></div>
     </form>
   </sr-modal>
 }
 @if(offerForm(); as form){
-  <sr-modal [title]="editingOffer ? 'Edit offer' : 'Add offer'" (closed)="offerForm.set(null)">
+  <sr-modal [title]="t(editingOffer ? 'Edit offer' : 'Add offer')" (closed)="offerForm.set(null)">
     <form class="modal-form" #editor="ngForm" (ngSubmit)="saveOffer(form)">
-      <label>Stockroom product
+      <label>{{t('Stockroom product')}}
         <select name="sku" [(ngModel)]="form.sku" [disabled]="editingOffer" required>
-          <option value="">Choose a product</option>
+          <option value="">{{t('Choose a product')}}</option>
           @for(product of s.products(); track product.sku){<option [value]="product.sku">{{product.product_name}} · {{product.sku}}</option>}
         </select>
       </label>
       <div class="form-grid">
-        <label>Purchase cost (KZT)<input name="cost" type="number" [(ngModel)]="form.unit_cost" min="1" max="10000000" required /></label>
-        <label>Available at supplier<input name="available" type="number" [(ngModel)]="form.available_qty" min="0" max="1000000" placeholder="Unknown" /></label>
+        <label>{{t('Purchase cost (KZT)')}}<input name="cost" type="number" [(ngModel)]="form.unit_cost" min="1" max="10000000" required /></label>
+        <label>{{t('Available at supplier')}}<input name="available" type="number" [(ngModel)]="form.available_qty" min="0" max="1000000" [placeholder]="t('Unknown')" /></label>
       </div>
-      @if(error()){<div class="error" role="alert">{{error()}}</div>}
-      <div class="button-group"><button class="btn primary" [disabled]="editor.invalid || saving()">Save offer</button></div>
+      @if(error()){<div class="error" role="alert">{{message(error())}}</div>}
+      <div class="button-group"><button class="btn primary" [disabled]="editor.invalid || saving()">{{t('Save offer')}}</button></div>
     </form>
   </sr-modal>
 }

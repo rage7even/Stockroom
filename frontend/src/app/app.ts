@@ -7,15 +7,20 @@ import { Icon } from "./icon";
 import { Auth } from "./auth";
 import { Notifications } from "./notifications";
 import { ThemeToggle } from "./theme-toggle";
+import { Language, LanguageSelect } from "./language";
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, Icon, Auth, Notifications, ThemeToggle],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, Icon, Auth, Notifications, ThemeToggle, LanguageSelect],
   templateUrl: "./app.html",
 })
 export class App {
+  readonly label = inject(Language).label;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   router = inject(Router);
+  readonly t = inject(Language).translate;
   mobile = signal(false);
   today = new Date();
   navigation = [
@@ -25,6 +30,7 @@ export class App {
     { path: "/orders", label: "Orders", icon: "orders", restricted: false },
     { path: "/suppliers", label: "Suppliers", icon: "users", restricted: true },
     { path: "/purchases", label: "Purchase orders", icon: "orders", restricted: true },
+    { path: "/chat", label: "Messages", icon: "message", restricted: false },
     { path: "/purchase-receiving", label: "Purchase receiving", icon: "scan", restricted: true },
     {
       path: "/receiving",
@@ -51,7 +57,11 @@ export class App {
   async refresh(){try{await this.s.refresh();}catch(e){this.s.error.set((e as Error).message);}}
   constructor() {
     effect(() => {
-      if (this.s.support() && !["/issues", "/profile"].includes(this.router.url.split("?")[0])) {
+      const path = this.router.url.split("?")[0];
+      if (this.s.supplier() && !["/chat", "/profile"].includes(path)) {
+        void this.router.navigateByUrl("/chat");
+      }
+      if (this.s.support() && !["/issues", "/profile", "/chat"].includes(path)) {
         void this.router.navigateByUrl("/issues");
       }
     });

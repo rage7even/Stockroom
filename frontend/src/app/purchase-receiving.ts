@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
@@ -12,6 +13,9 @@ import { Store } from "./store";
   templateUrl: "./purchase-receiving.html",
 })
 export class PurchaseReceiving {
+  readonly t = inject(Language).translate;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   private route = inject(ActivatedRoute);
   private router = inject(Router);

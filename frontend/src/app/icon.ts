@@ -41,6 +41,7 @@ export class Icon {
     logout: "M9 21H3V3h6m6 4 5 5-5 5M8 12h12",
     close: "m6 6 12 12M6 18 18 6",
     mail: "M3 5h18v14H3V5Zm0 0 9 8 9-8",
+    message: "M3 4h18v13H9l-6 4V4Zm4 5h10M7 13h7",
     lock: "M5 10h14v11H5V10Zm3 0V6a4 4 0 0 1 8 0v4M12 14v3",
     cable: "M8 3v4m8-4v4M6 7h12v5a6 6 0 0 1-12 0V7Zm6 11v4",
     phone: "M7 2h10v20H7V2Zm4 17h2",

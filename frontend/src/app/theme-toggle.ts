@@ -1,6 +1,7 @@
 import { DOCUMENT } from "@angular/common";
 import { Component, inject, signal } from "@angular/core";
 import { Icon } from "./icon";
+import { Language } from "./language";
 
 @Component({
   selector: "sr-theme-toggle",
@@ -10,9 +11,9 @@ import { Icon } from "./icon";
     <button
       type="button"
       class="icon-button theme-toggle"
-      aria-label="Dark theme"
+      [attr.aria-label]="title()"
       [attr.aria-pressed]="dark()"
-      [title]="dark() ? 'Switch to light theme' : 'Switch to dark theme'"
+      [title]="title()"
       (click)="toggle()"
     >
       <sr-icon [name]="dark() ? 'sun' : 'moon'" />
@@ -22,6 +23,8 @@ import { Icon } from "./icon";
 export class ThemeToggle {
   private readonly root = inject(DOCUMENT).documentElement;
   readonly dark = signal(this.root.dataset["theme"] === "dark");
+  private readonly t = inject(Language).translate;
+  title() { return this.t(this.dark() ? "Switch to light theme" : "Switch to dark theme"); }
 
   toggle() {
     const theme = this.dark() ? "light" : "dark";

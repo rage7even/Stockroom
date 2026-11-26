@@ -11,7 +11,7 @@ from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from .models import Staff, Product, Customer, Order, StockMovement
@@ -70,6 +70,7 @@ def login(request):
 
 
 @api_view(["GET", "PATCH"])
+@permission_classes([IsAuthenticated])
 def me(request):
     if request.method == "PATCH":
         class ProfileInput(serializers.Serializer):
@@ -107,6 +108,7 @@ def me(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def logout(request):
     sign_out(request)
     return Response({"ok": True})

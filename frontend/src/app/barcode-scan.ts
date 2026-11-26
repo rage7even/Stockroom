@@ -3,6 +3,12 @@ import { FormsModule } from "@angular/forms";
 import { readBarcodeRow } from "./code128";
 import { Icon } from "./icon";
 import { Modal } from "./modal";
+import { Language } from "./language";
+
+export interface ScanResult {
+  barcode: string;
+  source: "camera" | "manual";
+}
 
 type Detector = { detect(video: HTMLVideoElement): Promise<{ rawValue: string }[]> };
 type DetectorConstructor = new (options: { formats: string[] }) => Detector;
@@ -11,23 +17,23 @@ type DetectorConstructor = new (options: { formats: string[] }) => Detector;
   selector: "sr-barcode-scan",
   imports: [FormsModule, Icon, Modal],
   template: `
-    <button class="btn" type="button" (click)="show()"><sr-icon name="scan" />{{label()}}</button>
+    <button class="btn" type="button" [disabled]="disabled()" (click)="show()"><sr-icon name="scan" />{{t(label())}}</button>
     @if(open()){
-      <sr-modal title="Scan barcode" (closed)="close()">
+      <sr-modal [title]="t('Scan barcode')" (closed)="close()">
         <div class="workflow-stack">
           <div class="scan-preview" [hidden]="!camera()">
-            <video #video muted playsinline aria-label="Barcode camera preview"></video>
+            <video #video muted playsinline [attr.aria-label]="t('Barcode camera preview')"></video>
             <span aria-hidden="true"></span>
           </div>
-          @if(camera()){<p>Hold the bars upright. Move closer until the full barcode fills the guide and the bars look sharp.</p>}
-          @if(message()){<p role="status">{{message()}}</p>}
+          @if(camera()){<p>{{t('Hold the bars upright. Move closer until the full barcode fills the guide and the bars look sharp.')}}</p>}
+          @if(message()){<p role="status">{{t(message())}}</p>}
           <form class="modal-form" (ngSubmit)="accept(code)">
-            <label>Barcode
+            <label>{{t('Barcode')}}
               <input name="barcode" [(ngModel)]="code" maxlength="27" autocomplete="off" autocapitalize="characters" />
             </label>
             <div class="button-group">
-              <button class="btn primary" type="submit" [disabled]="!code.trim()">Find product</button>
-              @if(!camera()){<button class="btn" type="button" (click)="start()">Open camera</button>}
+              <button class="btn primary" type="submit" [disabled]="!code.trim()">{{t('Find product')}}</button>
+              @if(!camera()){<button class="btn" type="button" (click)="start()">{{t('Open camera')}}</button>}
             </div>
           </form>
         </div>
@@ -37,7 +43,10 @@ type DetectorConstructor = new (options: { formats: string[] }) => Detector;
 })
 export class BarcodeScan implements OnDestroy {
   label = input("Scan barcode");
+  disabled = input(false);
+  readonly t = inject(Language).translate;
   scanned = output<string>();
+  scanCompleted = output<ScanResult>();
   video = viewChild<ElementRef<HTMLVideoElement>>("video");
   open = signal(false);
   camera = signal(false);
@@ -108,7 +117,7 @@ export class BarcodeScan implements OnDestroy {
         if (!found && ctx) found = this.scanFrame(video, ctx);
       }
       if (request !== this.request) return;
-      if (found) this.accept(found);
+      if (found) this.accept(found, "camera");
       else this.timer = setTimeout(scan, 180);
     };
     void scan();
@@ -132,11 +141,12 @@ export class BarcodeScan implements OnDestroy {
     return null;
   }
 
-  accept(value: string) {
+  accept(value: string, source: ScanResult["source"] = "manual") {
     const code = value.trim().toUpperCase();
     if (!code) return;
     this.close();
     this.scanned.emit(code);
+    this.scanCompleted.emit({ barcode: code, source });
   }
 
   close() {

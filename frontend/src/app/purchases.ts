@@ -1,6 +1,7 @@
 import { DatePipe, DecimalPipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { Language } from "./language";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Modal } from "./modal";
 import { Purchase, purchaseStatus, Supplier } from "./purchase-types";
@@ -11,7 +12,10 @@ import { Store } from "./store";
   templateUrl: "./purchases.html",
 })
 export class Purchases {
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
+  readonly t = inject(Language).translate;
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   rows = signal<Purchase[]>([]);

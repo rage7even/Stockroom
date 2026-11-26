@@ -1,44 +1,43 @@
 @if(!s.warehouse()){
 <div class="empty-state">
   <sr-icon name="lock" />
-  <h1>Manager access required</h1>
-  <p>Stock history contains staff information.</p>
+  <h1>{{t('Manager access required')}}</h1>
+  <p>{{t('Stock history contains staff information.')}}</p>
 </div>
 }@else{
 <div class="page-heading">
   <div>
-    <span class="eyebrow">EVERY CHANGE LEAVES A TRACE</span>
-    <h1>Stock history<span class="heading-dot">.</span></h1>
+    <span class="eyebrow">{{t('EVERY CHANGE LEAVES A TRACE')}}</span>
+    <h1>{{t('Stock history')}}<span class="heading-dot">.</span></h1>
     <p>
-      A permanent ledger of deliveries, reservations, releases and corrections.
+      {{t('A permanent ledger of deliveries, reservations, releases and corrections.')}}
     </p>
   </div>
 
 </div>
 <div class="notice mint">
   <sr-icon name="shield" /><span
-    ><strong>Append-only by design.</strong> History cannot be edited or
-    deleted. Shelf and reservation changes are recorded separately.</span
+    ><strong>{{t('Append-only by design.')}}</strong> {{t('History cannot be edited or deleted. Shelf and reservation changes are recorded separately.')}}</span
   >
 </div>
 <section class="panel">
   <div class="toolbar">
     <div class="search-field">
       <sr-icon name="search" /><input
-        aria-label="Search history"
-        placeholder="Search SKU, product, staff or reference…"
+        [attr.aria-label]="t('Search history')"
+        [placeholder]="t('Search SKU, product, staff or reference…')"
         [ngModel]="query()"
         (ngModelChange)="query.set($event)"
       />
     </div>
     <select
-      aria-label="Movement type"
+      [attr.aria-label]="t('Movement type')"
       [ngModel]="type()"
       (ngModelChange)="type.set($event)"
     >
-      <option value="all">All movements</option>
-      @for(t of types;track t){
-      <option [value]="t">{{t.replace('_',' ')}}</option>
+      <option value="all">{{t('All movements')}}</option>
+      @for(movement of types;track movement){
+      <option [value]="movement">{{label(movement)}}</option>
       }
     </select>
   </div>
@@ -46,26 +45,26 @@
     <table>
       <thead>
         <tr>
-          <th>When / who</th>
-          <th>Product</th>
-          <th>Movement</th>
-          <th>Shelf Δ</th>
-          <th>Reserved Δ</th>
-          <th>Source / reference</th>
+          <th>{{t('When / who')}}</th>
+          <th>{{t('Product')}}</th>
+          <th>{{t('Movement')}}</th>
+          <th>{{t('Shelf Δ')}}</th>
+          <th>{{t('Reserved Δ')}}</th>
+          <th>{{t('Source / reference')}}</th>
         </tr>
       </thead>
       <tbody>
         @for(m of filtered();track m.movement_id){
         <tr>
           <td class="nowrap">
-            {{m.moved_at|date:'dd MMM y, HH:mm:ss'}}<small
+            {{m.moved_at | date:'dd MMM y, HH:mm:ss':undefined:locale()}}<small
               >{{m.staff_name}}</small
             >
           </td>
           <td><strong>{{m.product_name}}</strong><small>{{m.sku}}</small></td>
           <td>
             <span class="badge neutral"
-              >{{m.movement_type.replace('_',' ')}}</span
+              >{{label(m.movement_type)}}</span
             >
           </td>
           <td
@@ -76,21 +75,21 @@
           </td>
           <td>{{m.reserved_delta>0?'+':''}}{{m.reserved_delta}}</td>
           <td class="history-note">
-            <strong>{{m.source}}{{m.order_id?' · '+m.order_id:''}}</strong
-            ><small>{{m.note}}</small>
+            <strong>{{label(m.source)}}{{m.order_id?' · '+m.order_id:''}}</strong
+            ><small>{{t(m.note)}}</small>
           </td>
         </tr>
         }@empty{
         <tr>
-          <td colspan="6" class="empty">No movements match your filters.</td>
+          <td colspan="6" class="empty">{{t('No movements match your filters.')}}</td>
         </tr>
         }
       </tbody>
     </table>
   </div>
   <div class="table-footer">
-    <span>{{filtered().length}} recorded movements</span
-    ><span>Displayed times use this device’s timezone.</span>
+    <span>{{t('{0} recorded movements', filtered().length)}}</span
+    ><span>{{t('Displayed times use this device’s timezone.')}}</span>
   </div>
 </section>
 }

@@ -1,7 +1,9 @@
+from uuid import uuid4
+
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
-from inventory.models import Customer, Order, Product, Staff
+from inventory.models import Customer, Order, OrderScan, Product, Staff
 from inventory.services import confirm, record, transition
 
 
@@ -63,6 +65,12 @@ class Command(BaseCommand):
                 "customer": customer, "channel": "sales_manager", "note": marker,
                 "lines": [{"sku": "DEM-C35W-WHT", "qty": 5}],
             }, staff)
+            OrderScan.objects.bulk_create([
+                OrderScan(id=uuid4(), line=line, staff=staff, barcode=line.product.barcode, source="demo")
+                for line in order.lines.select_related("product")
+                for _ in range(line.qty_reserved)
+            ])
+            transition(order.pk, "pack", staff)
             transition(order.pk, "ship", staff)
         if options["catalogue"]:
             self.add_catalogue(staff)

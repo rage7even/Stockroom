@@ -1,3 +1,4 @@
+import { Language } from "./language";
 import { Component, inject, signal, computed } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DecimalPipe } from "@angular/common";
@@ -10,6 +11,9 @@ import { Modal } from "./modal";
   templateUrl: "./customers.html",
 })
 export class Customers {
+  readonly t = inject(Language).translate;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   query = signal("");
   creating = signal(false);

@@ -1,4 +1,5 @@
-import { DatePipe, TitleCasePipe } from "@angular/common";
+import { Language } from "./language";
+import { DatePipe } from "@angular/common";
 import { Component, computed, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterLink } from "@angular/router";
@@ -21,10 +22,14 @@ interface ReturnRow {
 
 @Component({
   standalone: true,
-  imports: [DatePipe, TitleCasePipe, FormsModule, RouterLink, Icon],
+  imports: [DatePipe, FormsModule, RouterLink, Icon],
   templateUrl: "./return-queue.html",
 })
 export class ReturnQueue {
+  readonly t = inject(Language).translate;
+  readonly label = inject(Language).label;
+  readonly message = inject(Language).message;
+  readonly locale = inject(Language).locale;
   s = inject(Store);
   rows = signal<ReturnRow[]>([]);
   busy = signal(false);

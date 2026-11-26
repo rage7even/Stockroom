@@ -5,6 +5,15 @@ services:
     restart: unless-stopped
     environment:
       STOCKROOM_EXTRA_HOSTS: "${STOCKROOM_EXTRA_HOSTS:-}"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-stockroom-local-study-project-change-before-hosting}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      STOCKROOM_EMAIL_FROM: "${STOCKROOM_EMAIL_FROM:-Stockroom <stockroom@localhost>}"
+      STOCKROOM_SMTP_HOST: "${STOCKROOM_SMTP_HOST:-localhost}"
+      STOCKROOM_SMTP_PORT: "${STOCKROOM_SMTP_PORT:-25}"
+      STOCKROOM_SMTP_USER: "${STOCKROOM_SMTP_USER:-}"
+      STOCKROOM_SMTP_PASSWORD: "${STOCKROOM_SMTP_PASSWORD:-}"
+      STOCKROOM_SMTP_TLS: "${STOCKROOM_SMTP_TLS:-false}"
+      STOCKROOM_SMTP_SSL: "${STOCKROOM_SMTP_SSL:-false}"
     ports:
       - "${STOCKROOM_BIND:-127.0.0.1}:${STOCKROOM_PORT:-8001}:8000"
     volumes:
