@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path, re_path
 from inventory import views as v
-from inventory import cart, chat, purchases, recovery, scans, week11
+from inventory import cart, chat, profile_security, purchases, recovery, scans, week11
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -11,6 +11,9 @@ urlpatterns = [
     re_path(r"^api/auth/login/?$", v.login),
     path("api/auth/password-reset/request", recovery.request_reset),
     path("api/auth/password-reset/confirm", recovery.confirm_reset),
+    path("api/auth/profile-security", profile_security.status),
+    path("api/auth/profile-security/request", profile_security.request_code),
+    path("api/auth/profile-security/confirm", profile_security.confirm_code),
     path("api/chat", chat.conversations),
     path("api/chat/<int:purchase_id>/messages", chat.messages),
     path("api/chat/staff", chat.colleagues),

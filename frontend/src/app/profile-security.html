@@ -1,0 +1,85 @@
+<section class="panel workflow-form">
+  <h2>{{t('Account security')}}</h2>
+  @if (state(); as account) {
+    <p>
+      <strong>{{t('Recovery email')}}</strong>
+      @if (account.recovery_email) {
+        <span> · {{account.recovery_email}}</span>
+      } @else {
+        <span> · {{t('No recovery email linked.')}}</span>
+      }
+    </p>
+    @if (!action()) {
+      @if (!account.can_link_email) {
+        <p class="subtle">{{t('Ask an administrator to link a recovery email for this shared demo account.')}}</p>
+      }
+      <div class="button-group">
+        @if (account.can_link_email) {
+          <button type="button" class="btn" (click)="choose('recovery_email')">
+            {{t(account.recovery_email ? 'Change recovery email' : 'Link recovery email')}}
+          </button>
+        }
+        <button type="button" class="btn" [disabled]="!account.recovery_email" (click)="choose('password')">
+          {{t('Change password')}}
+        </button>
+      </div>
+    } @else if (!challenge()) {
+      <form class="modal-form" (ngSubmit)="requestCode()" #requestForm="ngForm">
+        @if (action() === 'recovery_email') {
+          <label>{{t('New recovery email')}}
+            <input type="email" name="security-email" [(ngModel)]="email"
+              maxlength="254" autocomplete="email" required email />
+          </label>
+        }
+        <label>{{t('Current password')}}
+          <input type="password" name="current-password" [(ngModel)]="currentPassword"
+            maxlength="128" autocomplete="current-password" required />
+        </label>
+        <div class="button-group">
+          <button type="submit" class="btn primary" [disabled]="busy() || !requestForm.valid">
+            {{t('Send code')}}
+          </button>
+          <button type="button" class="btn" [disabled]="busy()" (click)="choose(null)">{{t('Cancel')}}</button>
+        </div>
+      </form>
+    } @else {
+      <p class="subtle">{{t('Check {0} for your eight-digit code.', action() === 'recovery_email' ? email : account.recovery_email)}}</p>
+      <form class="modal-form" (ngSubmit)="confirm()" #confirmForm="ngForm">
+        <label>{{t('Verification code')}}
+          <input name="security-code" [(ngModel)]="code" maxlength="8" pattern="[0-9]{8}"
+            inputmode="numeric" autocomplete="one-time-code" required />
+        </label>
+        @if (challenge()?.requires_old_code) {
+          <label>{{t('Code from your current recovery email')}}
+            <input name="previous-code" [(ngModel)]="oldCode" maxlength="8"
+              pattern="[0-9]{8}" inputmode="numeric" autocomplete="off" required />
+          </label>
+        }
+        @if (action() === 'password') {
+          <label>{{t('New password')}}
+            <input type="password" name="security-new-password" [(ngModel)]="password"
+              minlength="10" maxlength="128" autocomplete="new-password" required />
+          </label>
+          <label>{{t('Confirm new password')}}
+            <input type="password" name="security-confirm-password" [(ngModel)]="confirmation"
+              maxlength="128" autocomplete="new-password" required />
+          </label>
+        }
+        <div class="button-group">
+          <button type="submit" class="btn primary" [disabled]="busy() || !confirmForm.valid">{{t('Confirm')}}</button>
+          <button type="button" class="btn" [disabled]="busy()" (click)="choose(null)">{{t('Cancel')}}</button>
+        </div>
+      </form>
+    }
+  } @else if (busy()) {
+    <p>{{t('Loading…')}}</p>
+  } @else {
+    <button type="button" class="btn" (click)="load()">{{t('Try again')}}</button>
+  }
+  @if (error()) {
+    <p class="error" role="alert">{{errorMessage(error())}}</p>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{t(notice())}}</p>
+  }
+</section>

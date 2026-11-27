@@ -62,32 +62,50 @@ def code_digest(token, staff, code):
     return salted_hmac("stockroom.password-reset", value, algorithm="sha256").hexdigest()
 
 
-def deliver_code(email, code):
+MAIL_CODES = {
+    "reset": ("Stockroom password reset", "reset your password"),
+    "verify_email": ("Stockroom recovery email verification", "verify this recovery email"),
+    "approve_email": ("Stockroom recovery email change", "approve replacing your recovery email"),
+    "change_password": ("Stockroom password change", "change your password"),
+}
+
+
+def set_validated_password(staff, password):
+    try:
+        validate_password(password, staff)
+    except DjangoValidationError as error:
+        raise ValidationError({"password": error.messages}) from error
+    staff.set_password(password)
+    staff.save(update_fields=["password"])
+
+
+def deliver_code(email, code, purpose="reset"):
+    subject, action = MAIL_CODES[purpose]
     try:
         sent = send_mail(
-            "Stockroom password reset",
-            f"Your Stockroom reset code is {code}. It expires in 10 minutes. "
-            "If you did not request a password reset, you can ignore this email.",
+            subject,
+            f"Your Stockroom code to {action} is {code}. It expires in 10 minutes. "
+            "If you did not request this change, you can ignore this email.",
             settings.DEFAULT_FROM_EMAIL,
             [email],
         )
         if not sent:
-            logger.warning("Password reset email was not accepted by the configured mail service.")
+            logger.warning("Account security email was not accepted by the configured mail service.")
     except Exception:
-        logger.warning("Password reset email could not be sent. Check the configured mail service.")
+        logger.warning("Account security email could not be sent. Check the configured mail service.")
     finally:
         mail_slots.release()
 
 
-def queue_code(email, code):
+def queue_code(email, code, purpose="reset"):
     if not mail_slots.acquire(blocking=False):
-        logger.warning("Password reset email queue is full.")
+        logger.warning("Account security email queue is full.")
         return
     try:
-        mail_workers.submit(deliver_code, email, code)
+        mail_workers.submit(deliver_code, email, code, purpose)
     except RuntimeError:
         mail_slots.release()
-        logger.warning("Password reset email worker is unavailable.")
+        logger.warning("Account security email worker is unavailable.")
 
 
 @api_view(["POST"])
@@ -132,12 +150,7 @@ def confirm_reset(request):
         ):
             raise ValidationError(INVALID_CODE)
         if constant_time_compare(challenge.digest, code_digest(challenge.token, staff, data["code"])):
-            try:
-                validate_password(data["password"], staff)
-            except DjangoValidationError as error:
-                raise ValidationError({"password": error.messages}) from error
-            staff.set_password(data["password"])
-            staff.save(update_fields=["password"])
+            set_validated_password(staff, data["password"])
             challenge.used_at = now
             challenge.save(update_fields=["used_at"])
             return Response({"ok": True})

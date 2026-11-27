@@ -326,6 +326,23 @@ class PasswordResetChallenge(models.Model):
     used_at = models.DateTimeField(null=True)
 
 
+class ProfileSecurityChallenge(models.Model):
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE)
+    action = models.CharField(max_length=14)
+    token = models.UUIDField(unique=True)
+    email = models.EmailField()
+    digest = models.CharField(max_length=64)
+    old_digest = models.CharField(max_length=64, blank=True)
+    issued_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["staff", "action"], name="unique_profile_security_action"),
+        ]
+
+
 class DirectConversation(models.Model):
     first = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="direct_conversations_first")
     second = models.ForeignKey(Staff, on_delete=models.PROTECT, related_name="direct_conversations_second")

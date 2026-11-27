@@ -22,7 +22,7 @@ const labels: Record<string, string> = {
 
 const fields: Record<string, string> = {
   full_name: "Full name", job_title: "Job title", login: "Email address", email: "Email address",
-  password: "Password", code: "Reset code", sku: "SKU", product_name: "Product name", category: "Category",
+  password: "Password", current_password: "Current password", old_code: "Code from your current recovery email", code: "Reset code", sku: "SKU", product_name: "Product name", category: "Category",
   brand: "Brand", location: "Location", price_kzt: "Price (KZT)", reorder_level: "Reorder threshold",
   customer_id: "Customer", shop_name: "Shop name", contact_name: "Contact name", phone: "Phone",
   lines: "Order lines", qty: "Quantity", quantity: "Quantity", note: "Note", channel: "Channel",

@@ -3,9 +3,10 @@ import { Component, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { DatePipe } from "@angular/common";
 import { Store, User } from "./store";
+import { ProfileSecurity } from "./profile-security";
 
 @Component({
-  imports: [FormsModule],
+  imports: [FormsModule, ProfileSecurity],
   template: `
     <div class="page-heading"><div><h1>{{t('Profile')}}</h1><p>{{s.user()?.login}} · {{label(s.user()?.role)}}</p></div></div>
     <section class="panel">
@@ -22,6 +23,7 @@ import { Store, User } from "./store";
         <button class="btn primary" [disabled]="!form.valid || saving()">{{t('Save profile')}}</button>
       </form>
     </section>
+    <sr-profile-security />
   `,
 })
 export class Profile {
