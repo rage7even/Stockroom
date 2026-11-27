@@ -72,6 +72,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
+STOCKROOM_DEMO_SETUP_KEY = os.environ.get("STOCKROOM_DEMO_SETUP_KEY", "").strip()
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 EMAIL_BACKEND = os.environ.get("STOCKROOM_EMAIL_BACKEND") or (
     "inventory.mail_backend.ResendBackend" if RESEND_API_KEY else "django.core.mail.backends.smtp.EmailBackend"

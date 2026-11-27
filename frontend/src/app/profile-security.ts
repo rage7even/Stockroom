@@ -8,6 +8,7 @@ type SecurityAction = "recovery_email" | "password";
 interface SecurityState {
   recovery_email: string | null;
   can_link_email: boolean;
+  requires_setup_key: boolean;
 }
 
 @Component({
@@ -30,6 +31,7 @@ export class ProfileSecurity {
 
   currentPassword = "";
   email = "";
+  setupKey = "";
   code = "";
   oldCode = "";
   password = "";
@@ -60,8 +62,10 @@ export class ProfileSecurity {
         action,
         current_password: this.currentPassword,
         ...(action === "recovery_email" ? { email: this.email } : {}),
+        ...(action === "recovery_email" && this.state()?.requires_setup_key ? { setup_key: this.setupKey } : {}),
       });
       this.currentPassword = "";
+      this.setupKey = "";
       this.challenge.set(result);
     });
   }
@@ -90,6 +94,7 @@ export class ProfileSecurity {
   private clearFields() {
     this.challenge.set(null);
     this.currentPassword = "";
+    this.setupKey = "";
     this.email = "";
     this.code = "";
     this.oldCode = "";

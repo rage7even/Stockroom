@@ -26,6 +26,7 @@ class SecurityRequest(serializers.Serializer):
     action = serializers.ChoiceField(choices=["recovery_email", "password"])
     current_password = serializers.CharField(max_length=128, trim_whitespace=False)
     email = serializers.EmailField(max_length=254, required=False)
+    setup_key = serializers.CharField(max_length=200, required=False, write_only=True)
 
 
 class SecurityConfirm(serializers.Serializer):
@@ -36,14 +37,14 @@ class SecurityConfirm(serializers.Serializer):
 
 
 DEMO_LOGINS = frozenset(f"{role}@stockroom.local" for role in ("admin", "manager", "sales", "shop", "support", "supplier"))
-DEMO_EMAIL_REQUIRED = "Ask an administrator to link a recovery email for this shared demo account."
+DEMO_EMAIL_REQUIRED = "Enable the demo setup key in Render to link a recovery email."
 
 
-def may_link_email(request, staff):
+def needs_setup_key(request, staff):
     if staff.recovery_email or staff.username.lower() not in DEMO_LOGINS:
-        return True
+        return False
     host, _ = split_domain_port(request.get_host())
-    return settings.DEBUG and host in ("localhost", "127.0.0.1", "[::1]")
+    return not (settings.DEBUG and host in ("localhost", "127.0.0.1", "[::1]"))
 
 
 def security_state(request, staff):
@@ -51,7 +52,12 @@ def security_state(request, staff):
     if staff.recovery_email:
         name, _, domain = staff.recovery_email.partition("@")
         masked = name[:1] + "***@" + domain
-    return {"recovery_email": masked, "can_link_email": may_link_email(request, staff)}
+    requires_key = needs_setup_key(request, staff)
+    return {
+        "recovery_email": masked,
+        "can_link_email": not requires_key or bool(settings.STOCKROOM_DEMO_SETUP_KEY),
+        "requires_setup_key": requires_key,
+    }
 
 
 def get_locked_staff(request):
@@ -61,10 +67,13 @@ def get_locked_staff(request):
     return staff
 
 
-def digest(staff, action, token, destination, code):
+def digest(staff, action, token, destination, code, setup_key=""):
+    context = f"{staff.pk}:{action}:{token}:{staff.recovery_email or ''}:{staff.password}:{destination}:{code}"
+    if setup_key:
+        context += f":setup:{setup_key}"
     return salted_hmac(
         "stockroom.profile-security",
-        f"{staff.pk}:{action}:{token}:{staff.recovery_email or ''}:{staff.password}:{destination}:{code}",
+        context,
         algorithm="sha256",
     ).hexdigest()
 
@@ -85,9 +94,14 @@ def request_code(request):
         staff = get_locked_staff(request)
         if not staff.check_password(data["current_password"]):
             raise ValidationError({"current_password": ["Current password is incorrect."]})
+        setup_key = ""
         if action == "recovery_email":
-            if not may_link_email(request, staff):
-                raise PermissionDenied(DEMO_EMAIL_REQUIRED)
+            if needs_setup_key(request, staff):
+                setup_key = settings.STOCKROOM_DEMO_SETUP_KEY
+                if not setup_key:
+                    raise PermissionDenied(DEMO_EMAIL_REQUIRED)
+                if not constant_time_compare(data.get("setup_key", ""), setup_key):
+                    raise ValidationError("The demo setup key is incorrect.")
             destination = data.get("email", "").lower()
             if not destination:
                 raise ValidationError({"email": ["This field is required."]})
@@ -115,7 +129,7 @@ def request_code(request):
             action=action,
             defaults={
                 "token": token, "email": destination, "issued_at": now, "used_at": None, "attempts": 0,
-                "digest": digest(staff, action, token, destination, code),
+                "digest": digest(staff, action, token, destination, code, setup_key),
                 "old_digest": digest(staff, action, token, previous, old_code) if previous else "",
             },
         )
@@ -143,8 +157,13 @@ def confirm_code(request):
         ):
             raise ValidationError(INVALID_CODE)
 
+        setup_key = ""
+        if action == "recovery_email" and needs_setup_key(request, staff):
+            setup_key = settings.STOCKROOM_DEMO_SETUP_KEY
+            if not setup_key:
+                raise PermissionDenied(DEMO_EMAIL_REQUIRED)
         valid = constant_time_compare(
-            challenge.digest, digest(staff, action, challenge.token, challenge.email, data["code"])
+            challenge.digest, digest(staff, action, challenge.token, challenge.email, data["code"], setup_key)
         )
         if challenge.old_digest:
             old_valid = constant_time_compare(
@@ -157,8 +176,6 @@ def confirm_code(request):
             challenge.save(update_fields=["attempts"])
         else:
             if action == "recovery_email":
-                if not may_link_email(request, staff):
-                    raise PermissionDenied(DEMO_EMAIL_REQUIRED)
                 try:
                     with transaction.atomic():
                         staff.recovery_email = challenge.email

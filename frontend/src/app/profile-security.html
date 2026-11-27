@@ -11,7 +11,7 @@
     </p>
     @if (!action()) {
       @if (!account.can_link_email) {
-        <p class="subtle">{{t('Ask an administrator to link a recovery email for this shared demo account.')}}</p>
+        <p class="subtle">{{t('Enable the demo setup key in Render to link a recovery email.')}}</p>
       }
       <div class="button-group">
         @if (account.can_link_email) {
@@ -29,6 +29,12 @@
           <label>{{t('New recovery email')}}
             <input type="email" name="security-email" [(ngModel)]="email"
               maxlength="254" autocomplete="email" required email />
+          </label>
+        }
+        @if (action() === 'recovery_email' && account.requires_setup_key) {
+          <label>{{t('Demo setup key')}}
+            <input type="password" name="setup-key" [(ngModel)]="setupKey"
+              maxlength="200" autocomplete="off" required />
           </label>
         }
         <label>{{t('Current password')}}

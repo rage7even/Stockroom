@@ -128,9 +128,31 @@ class ProfileSecurityTests(TestCase):
         self.assertIsNone(self.staff.recovery_email)
 
     @override_settings(DEBUG=False)
-    def test_shared_demo_initial_binding_requires_admin_on_public_host(self):
+    def test_shared_demo_initial_binding_is_blocked_without_setup_key(self):
         self.staff.username = "manager@stockroom.local"
         self.staff.save(update_fields=["username"])
         self.assertFalse(self.api.get(self.base).json()["can_link_email"])
         self.assertEqual(self.request("recovery_email", email=self.first_email).status_code, 403)
         self.assertFalse(ProfileSecurityChallenge.objects.exists())
+
+    @override_settings(DEBUG=False, STOCKROOM_DEMO_SETUP_KEY="example-test-key")
+    def test_shared_demo_can_link_with_setup_key_and_email_code(self):
+        self.staff.username = "admin@stockroom.local"
+        self.staff.save(update_fields=["username"])
+        state = self.api.get(self.base).json()
+        self.assertTrue(state["can_link_email"])
+        self.assertTrue(state["requires_setup_key"])
+        self.assertNotIn("example-test-key", str(state))
+        invalid = self.request("recovery_email", email=self.first_email, setup_key="wrong")
+        self.assertEqual(invalid.status_code, 400)
+        self.assertFalse(mail.outbox)
+        sent = self.request("recovery_email", email=self.first_email, setup_key="example-test-key")
+        self.assertEqual(sent.status_code, 202)
+        code = self.code_from(mail.outbox[0])
+        with self.settings(STOCKROOM_DEMO_SETUP_KEY="rotated-test-key"):
+            self.assertEqual(self.confirm("recovery_email", code).status_code, 400)
+        verified = self.confirm("recovery_email", code)
+        self.assertEqual(verified.status_code, 200)
+        self.assertFalse(verified.json()["requires_setup_key"])
+        self.staff.refresh_from_db()
+        self.assertEqual(self.staff.recovery_email, self.first_email)
